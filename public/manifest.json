@@ -1,0 +1,17 @@
+{
+    "name": "Dana Kita",
+    "short_name": "DanaKita",
+    "description": "Kelola target tabungan masa depanmu dengan mudah",
+    "start_url": "/danakita/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
+    "icons": [
+        {
+            "src": "globe.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ],
+    "orientation": "portrait"
+}
