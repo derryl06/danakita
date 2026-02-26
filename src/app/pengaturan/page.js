@@ -78,7 +78,10 @@ export default function PengaturanPage() {
                             </button>
                         </div>
 
-                        <div className="flex justify-between items-center p-5 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <div
+                            onClick={() => router.push('/privasi')}
+                            className="flex justify-between items-center p-5 cursor-pointer hover:bg-slate-50 transition-colors"
+                        >
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 bg-slate-50 rounded-[14px]">
                                     <Shield className="w-5 h-5 text-slate-600" />

@@ -5,7 +5,7 @@ import { useQuickAdd } from '../context/QuickAddContext';
 import TopBar from '../components/TopBar';
 import GoalCard from '../components/GoalCard';
 import { differenceInMonths, parseISO, isValid } from 'date-fns';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function Beranda() {
@@ -58,8 +58,16 @@ export default function Beranda() {
   return (
     <main className="flex-1 flex flex-col min-h-screen pb-24">
       <TopBar
-        title="SiapDana"
+        title="Dana Kita"
         subtitle="Mulai persiapkan masa depanmu"
+        rightComponent={
+          <button
+            onClick={() => router.push('/transaksi')}
+            className="p-2.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-all active:scale-95 shadow-sm"
+          >
+            <Calendar className="w-5 h-5" />
+          </button>
+        }
       />
 
       <div className="px-5 mt-6 flex-1 flex flex-col">
@@ -116,53 +124,64 @@ export default function Beranda() {
           // NORMAL STATE
           <div>
             <div className="mb-6">
-              <h2 className="text-lg font-bold mb-3 text-[var(--color-text-primary)]">Target Utama</h2>
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Target Utama</h2>
+                <div onClick={() => router.push('/simulasi')} className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full cursor-pointer hover:bg-blue-100 transition-colors">
+                  <Sparkles className="w-3 h-3" />
+                  CEK ESTIMASI WAKTU
+                </div>
+              </div>
 
-              <div className="bg-white border rounded-[24px] p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border-[var(--color-primary)]/20 relative overflow-hidden hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-0.5">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-2xl -mr-16 -mt-16 z-0"></div>
+              <div className="bg-white border rounded-[32px] p-6 shadow-[0_10px_40px_-10px_rgba(37,99,235,0.1)] border-blue-100 relative overflow-hidden group hover:shadow-[0_15px_50px_-10px_rgba(37,99,235,0.15)] transition-all duration-500">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-100/40 to-indigo-100/10 rounded-full blur-3xl -mr-24 -mt-16 z-0 group-hover:scale-110 transition-transform duration-700"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-50/30 rounded-full blur-2xl -ml-16 -mb-16 z-0"></div>
 
                 <div className="z-10 relative">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-slate-600 text-sm">{targetUtama.name}</span>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-400 text-[10px] uppercase tracking-widest">{targetUtama.name}</span>
+                      <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight mt-1">
+                        Rp {targetUtama.current_amount?.toLocaleString('id-ID') || '0'}
+                      </h1>
+                    </div>
+                    <span className={`text-[10px] px-3 py-1 rounded-full font-black tracking-wider uppercase ${type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                       {status}
                     </span>
                   </div>
 
-                  <div className="flex items-end gap-2 mb-4">
-                    <h1 className="text-3xl font-extrabold text-[var(--color-text-primary)] tracking-tight">
-                      Rp {targetUtama.current_amount?.toLocaleString('id-ID') || '0'}
-                    </h1>
-                    <span className="text-sm font-semibold text-slate-400 mb-1.5">
-                      / Rp {targetUtama.target_amount?.toLocaleString('id-ID') || '0'}
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className="text-xs font-bold text-slate-400">
+                      Target: Rp {targetUtama.target_amount?.toLocaleString('id-ID') || '0'}
                     </span>
                   </div>
 
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-4 shadow-inner">
+                  <div className="w-full h-3 bg-slate-100/50 rounded-full overflow-hidden mb-6 shadow-inner backdrop-blur-sm">
                     <div
-                      className="h-full bg-gradient-to-r from-[var(--color-primary)] to-blue-400 rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                      className="h-full bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-400 rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
                       style={{ width: `${Math.min((targetUtama.current_amount / targetUtama.target_amount) * 100, 100)}%` }}
-                    ></div>
+                    >
+                      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[shimmer_2s_linear_infinite]"></div>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-xs font-semibold mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-slate-400">Target Waktu Terlama</span>
-                      <span className="text-slate-700">{targetUtama.deadline && isValid(parseISO(targetUtama.deadline)) ? differenceInMonths(parseISO(targetUtama.deadline), new Date()) + ' bulan lagi' : 'Belum disetel'}</span>
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="bg-slate-50/80 backdrop-blur-md p-3 rounded-2xl border border-white/50 shadow-sm">
+                      <span className="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Sisa Waktu</span>
+                      <span className="text-xs font-black text-slate-700">{targetUtama.deadline && isValid(parseISO(targetUtama.deadline)) ? differenceInMonths(parseISO(targetUtama.deadline), new Date()) + ' Bulan Lagi' : 'Belum Set'}</span>
                     </div>
                     {perMonth > 0 && (
-                      <div className="flex flex-col gap-1 items-end">
-                        <span className="text-slate-400">Butuh</span>
-                        <span className="text-blue-600">Rp {Math.round(perMonth).toLocaleString('id-ID')} / bln</span>
+                      <div className="bg-blue-50/50 backdrop-blur-md p-3 rounded-2xl border border-blue-100/50 shadow-sm">
+                        <span className="block text-[9px] font-bold text-blue-400 uppercase mb-0.5">Nabung / bln</span>
+                        <span className="text-xs font-black text-blue-700">Rp {Math.round(perMonth).toLocaleString('id-ID')}</span>
                       </div>
                     )}
                   </div>
 
                   <button
                     onClick={() => setIsOpen(true)}
-                    className="w-full bg-gradient-to-r from-[var(--color-primary)] to-blue-600 text-white py-3.5 rounded-[16px] font-bold shadow-md shadow-blue-500/20 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2"
+                    className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 group"
                   >
-                    Tambah tabungan
+                    Tambah Tabungan <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>
@@ -177,25 +196,13 @@ export default function Beranda() {
 
                 <div className="flex flex-col gap-3">
                   {targets.map(t => (
-                    <div key={t.id} className="bg-white border border-[var(--color-border)] p-4 rounded-[20px] flex justify-between items-center shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] hover:shadow-md hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 transition-all duration-300 cursor-pointer group">
-                      <div>
-                        <div className="flex gap-2 items-center mb-1">
-                          <h4 className="font-semibold text-sm">{t.name}</h4>
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md">
-                            {t.category}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[var(--color-primary)]">Rp {t.current_amount.toLocaleString('id-ID')}</span>
-                          <span className="text-xs text-slate-400">/ Rp {t.target_amount.toLocaleString('id-ID')}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-semibold px-2 py-1 bg-slate-50 text-slate-500 rounded-lg">
-                          {Math.round((t.current_amount / t.target_amount) * 100)}%
-                        </span>
-                      </div>
-                    </div>
+                    <GoalCard
+                      key={t.id}
+                      name={t.name}
+                      category={t.category}
+                      currentAmount={t.current_amount}
+                      targetAmount={t.target_amount}
+                    />
                   ))}
                 </div>
               </div>

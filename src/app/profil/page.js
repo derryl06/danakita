@@ -41,7 +41,7 @@ export default function ProfilPage() {
                 </div>
 
                 <p className="text-xs text-slate-400 font-medium mt-10">
-                    SiapDana Alpha v0.1 • Dibuat dengan cinta
+                    Dana Kita Alpha v0.1 • Dibuat dengan cinta
                 </p>
             </div>
         </main>

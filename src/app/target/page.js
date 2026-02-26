@@ -226,6 +226,7 @@ export default function TargetPage() {
                                                     <GoalCard
                                                         key={target.id}
                                                         name={target.name}
+                                                        category={target.category}
                                                         currentAmount={target.current_amount}
                                                         targetAmount={target.target_amount}
                                                         deadline={target.deadline}

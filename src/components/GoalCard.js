@@ -1,8 +1,10 @@
+import { Heart, Home, GraduationCap, AlertCircle, Coins, ChevronRight } from 'lucide-react';
 import ProgressBar from './ProgressBar';
 import StatusChip from './StatusChip';
 
 export default function GoalCard({
     name,
+    category = 'General',
     currentAmount = 0,
     targetAmount = 0,
     deadline,
@@ -13,6 +15,16 @@ export default function GoalCard({
     actionButton
 }) {
     const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
+
+    const getCategoryIcon = (cat) => {
+        switch (cat?.toLowerCase()) {
+            case 'menikah': return <Heart className="w-4 h-4 text-rose-500" />;
+            case 'rumah': return <Home className="w-4 h-4 text-blue-500" />;
+            case 'pendidikan': return <GraduationCap className="w-4 h-4 text-indigo-500" />;
+            case 'darurat': return <AlertCircle className="w-4 h-4 text-amber-500" />;
+            default: return <Coins className="w-4 h-4 text-emerald-500" />;
+        }
+    };
 
     const formatCur = (num) => {
         return 'Rp ' + num.toLocaleString('id-ID');
@@ -25,18 +37,25 @@ export default function GoalCard({
     };
 
     return (
-        <div className={`p-5 rounded-[24px] border border-[var(--color-border)] shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] bg-white hover:shadow-lg hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 transition-all duration-300 group ${isHero ? 'bg-gradient-to-br from-blue-50/50 via-white to-white' : ''}`}>
-            <div className="flex justify-between items-start mb-4">
-                <div>
-                    <h3 className="text-sm font-semibold text-slate-500 mb-1 group-hover:text-[var(--color-primary)] transition-colors">{name}</h3>
-                    <p className={`font-extrabold text-[var(--color-text-primary)] tracking-tight ${isHero ? 'text-3xl' : 'text-xl'}`}>
-                        {formatCur(currentAmount)}
-                    </p>
-                    {targetAmount > 0 && (
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                            dari {formatCur(targetAmount)}
+        <div className={`p-5 rounded-[24px] border border-[var(--color-border)] shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] bg-white hover:shadow-xl hover:-translate-y-1 hover:border-[var(--color-primary)]/30 transition-all duration-300 group overflow-hidden relative ${isHero ? 'bg-gradient-to-br from-blue-50/80 via-white to-white' : ''}`}>
+            {isHero && <div className="absolute top-0 right-0 w-24 h-24 bg-blue-100/30 rounded-full blur-2xl -mr-8 -mt-8"></div>}
+
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className="flex gap-3">
+                    <div className="mt-1 p-2 bg-slate-50 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all">
+                        {getCategoryIcon(category)}
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-tight mb-1 group-hover:text-[var(--color-primary)] transition-colors">{name}</h3>
+                        <p className={`font-black text-[var(--color-text-primary)] tracking-tight ${isHero ? 'text-2xl' : 'text-xl'}`}>
+                            {formatCur(currentAmount)}
                         </p>
-                    )}
+                        {targetAmount > 0 && (
+                            <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                DARI {formatCur(targetAmount)}
+                            </p>
+                        )}
+                    </div>
                 </div>
                 <StatusChip status={status} type={statusType} />
             </div>

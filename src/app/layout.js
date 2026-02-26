@@ -7,7 +7,7 @@ import { QuickAddProvider } from '../context/QuickAddContext';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata = {
-  title: 'SiapDana',
+  title: 'Dana Kita',
   description: 'Persiapkan target tabunganmu untuk masa depan yang lebih baik',
 };
 

@@ -15,7 +15,7 @@ export default function BottomNav() {
         { name: 'Beranda', href: '/', icon: Home },
         { name: 'Target', href: '/target', icon: Target },
         { name: 'Tambah', action: () => setIsOpen(true), icon: PlusCircle, isMain: true },
-        { name: 'Riwayat', href: '/riwayat', icon: Clock },
+        { name: 'Checklist', href: '/persiapan', icon: Clock },
         { name: 'Profil', href: '/profil', icon: User },
     ];
 
