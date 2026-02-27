@@ -30,9 +30,11 @@ export function AppProvider({ children }) {
 
     // Monitor Auth Status
     useEffect(() => {
+        if (!auth) return;
+
         const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
             setUser(fbUser);
-            if (fbUser) {
+            if (fbUser && db) {
                 // Check/Create Profile
                 const profileRef = doc(db, 'profiles', fbUser.uid);
                 const profileSnap = await getDoc(profileRef);
