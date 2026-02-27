@@ -3,16 +3,41 @@
 import TopBar from '../../components/TopBar';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Bell, Shield, Moon, MonitorSmartphone, Landmark, Plus, Trash2, Loader2, Link2, Settings2, FileSpreadsheet, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { requestNotificationPermission, showNotification } from '../../utils/notifications';
 
 export default function PengaturanPage() {
     const router = useRouter();
     const [darkMode, setDarkMode] = useState(false);
-    const [notifications, setNotifications] = useState(true);
+    const [notifications, setNotifications] = useState(false);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('dk_notifications_enabled');
+        setNotifications(saved === 'true');
+    }, []);
+
+    const toggleNotifications = async () => {
+        const newVal = !notifications;
+        if (newVal) {
+            const granted = await requestNotificationPermission();
+            if (granted) {
+                setNotifications(true);
+                localStorage.setItem('dk_notifications_enabled', 'true');
+                showNotification('Notifikasi Aktif!', {
+                    body: 'Kamu akan menerima pengingat harian untuk mencatat keuangan.'
+                });
+            } else {
+                alert('Izin notifikasi ditolak oleh browser.');
+            }
+        } else {
+            setNotifications(false);
+            localStorage.setItem('dk_notifications_enabled', 'false');
+        }
+    };
 
     const handleBack = () => {
-        router.back();
+        router.push('/');
     };
 
     return (
@@ -73,8 +98,8 @@ export default function PengaturanPage() {
                                 <span className="font-semibold text-sm text-[var(--color-text-primary)]">Notifikasi Pengingat</span>
                             </div>
                             <button
-                                onClick={() => setNotifications(!notifications)}
-                                className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${notifications ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                onClick={toggleNotifications}
+                                className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${notifications ? 'bg-indigo-600' : 'bg-slate-200'}`}
                             >
                                 <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-300 ease-in-out ${notifications ? 'translate-x-6' : 'translate-x-0'}`}></div>
                             </button>

@@ -14,9 +14,23 @@ export const metadata = {
   manifest: process.env.NODE_ENV === 'production' ? '/danakita/manifest.json' : '/manifest.json',
 };
 
+import { useEffect } from 'react';
+import { checkAndShowReminder } from '../utils/notifications';
+
 export default function RootLayout({ children }) {
   const isProd = process.env.NODE_ENV === 'production';
   const basePath = isProd ? '/danakita' : '';
+
+  useEffect(() => {
+    const enabled = localStorage.getItem('dk_notifications_enabled');
+    if (enabled === 'true') {
+      // Small delay to not annoy user immediately on entry
+      const timer = setTimeout(() => {
+        checkAndShowReminder();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   return (
     <html lang="id">
