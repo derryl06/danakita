@@ -16,20 +16,21 @@ export default function LoginPage() {
     const router = useRouter();
 
     const handleGoogleLogin = async () => {
+        if (!auth) {
+            setError('Konfigurasi Firebase belum terpasang. Jika di GitHub, pastikan sudah mengisi "Secrets".');
+            return;
+        }
         setLoading(true);
         setError(null);
-        const provider = new GoogleAuthProvider();
-        try {
-            await signInWithPopup(auth, provider);
-            router.push('/');
-        } catch (err) {
-            setError(err.message);
-            setLoading(false);
-        }
+        // ... rest of the code
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!auth) {
+            setError('Konfigurasi Firebase tidak ditemukan.');
+            return;
+        }
         setLoading(true);
         setError(null);
 
