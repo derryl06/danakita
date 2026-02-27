@@ -13,14 +13,18 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// Analytics (Optional & Client-side only)
+// Pastikan inisialisasi hanya terjadi jika API Key ada (mencegah error saat build)
+let app;
+let auth;
+let db;
 let analytics;
-if (typeof window !== "undefined") {
+
+if (firebaseConfig.apiKey && typeof window !== "undefined") {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+
+    // Analytics (Optional & Client-side only)
     isSupported().then((supported) => {
         if (supported) analytics = getAnalytics(app);
     });
