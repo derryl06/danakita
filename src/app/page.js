@@ -9,7 +9,7 @@ import { ArrowRight, Sparkles, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function Beranda() {
-  const { targets, isDemoMode, loadDemoData, clearData } = useAppContext();
+  const { targets, isDemoMode, loadDemoData, clearData, deleteTarget } = useAppContext();
   const { setIsOpen } = useQuickAdd();
   const router = useRouter();
 
@@ -61,12 +61,14 @@ export default function Beranda() {
         title="Dana Kita"
         subtitle="Mulai persiapkan masa depanmu"
         rightComponent={
-          <button
-            onClick={() => router.push('/transaksi')}
-            className="p-2.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-all active:scale-95 shadow-sm"
-          >
-            <Calendar className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/transaksi')}
+              className="p-2.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-all active:scale-95 shadow-sm"
+            >
+              <Calendar className="w-5 h-5" />
+            </button>
+          </div>
         }
       />
 
@@ -198,10 +200,13 @@ export default function Beranda() {
                   {targets.map(t => (
                     <GoalCard
                       key={t.id}
+                      id={t.id}
                       name={t.name}
                       category={t.category}
                       currentAmount={t.current_amount}
                       targetAmount={t.target_amount}
+                      onDelete={deleteTarget}
+                      onEdit={(id) => router.push('/target')}
                     />
                   ))}
                 </div>

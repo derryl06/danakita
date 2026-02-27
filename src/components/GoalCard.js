@@ -1,8 +1,9 @@
-import { Heart, Home, GraduationCap, AlertCircle, Coins, ChevronRight } from 'lucide-react';
+import { Heart, Home, GraduationCap, AlertCircle, Coins, ChevronRight, Trash2, Pencil } from 'lucide-react';
 import ProgressBar from './ProgressBar';
 import StatusChip from './StatusChip';
 
 export default function GoalCard({
+    id,
     name,
     category = 'General',
     currentAmount = 0,
@@ -12,7 +13,9 @@ export default function GoalCard({
     isHero = false,
     status = 'Belum disetel',
     statusType = 'neutral',
-    actionButton
+    actionButton,
+    onDelete,
+    onEdit
 }) {
     const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
 
@@ -57,7 +60,37 @@ export default function GoalCard({
                         )}
                     </div>
                 </div>
-                <StatusChip status={status} type={statusType} />
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                    <StatusChip status={status} type={statusType} />
+                    <div className="flex gap-1">
+                        {onEdit && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEdit(id);
+                                }}
+                                className="p-1.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                title="Edit Target"
+                            >
+                                <Pencil className="w-4 h-4" />
+                            </button>
+                        )}
+                        {onDelete && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm(`Yakin ingin menghapus target "${name}"?`)) {
+                                        onDelete(id);
+                                    }
+                                }}
+                                className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                title="Hapus Target"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <div className="mb-4">

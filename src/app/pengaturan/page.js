@@ -2,8 +2,9 @@
 
 import TopBar from '../../components/TopBar';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Bell, Shield, Moon, MonitorSmartphone } from 'lucide-react';
+import { ChevronLeft, Bell, Shield, Moon, MonitorSmartphone, Landmark, Plus, Trash2, Loader2, Link2, Settings2, FileSpreadsheet, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { useAppContext } from '../../context/AppContext';
 
 export default function PengaturanPage() {
     const router = useRouter();
@@ -15,7 +16,7 @@ export default function PengaturanPage() {
     };
 
     return (
-        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)]">
+        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)] overflow-x-hidden">
             <TopBar
                 title="Pengaturan"
                 rightComponent={
@@ -26,6 +27,7 @@ export default function PengaturanPage() {
             />
 
             <div className="px-5 mt-6 flex-1 flex flex-col gap-6">
+
 
                 <section>
                     <h3 className="text-sm font-bold text-slate-500 mb-3 ml-2 uppercase tracking-wider">Tampilan</h3>

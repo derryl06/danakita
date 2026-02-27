@@ -47,7 +47,7 @@ export default function PrivasiPage() {
                         <div>
                             <h3 className="font-bold text-slate-800 mb-2">Koneksi Pasangan (Partner Sync)</h3>
                             <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                                Saat Anda mengaktifkan fitur koneksi pasangan, data progres tabungan dan checklist akan dibagikan dengan pasangan yang Anda hubungkan untuk memudahkan kolaborasi pencapaian target. Anda dapat memutuskan koneksi ini kapan saja.
+                                Saat Anda mengaktifkan fitur koneksi pasangan, data progres tabungan akan dibagikan dengan pasangan yang Anda hubungkan untuk memudahkan kolaborasi pencapaian target. Anda dapat memutuskan koneksi ini kapan saja.
                             </p>
                         </div>
                     </section>

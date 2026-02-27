@@ -19,6 +19,8 @@ export default function BottomNav() {
         { name: 'Profil', href: '/profil', icon: User },
     ];
 
+    if (pathname === '/login') return null;
+
     return (
         <>
             <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.08)] rounded-3xl px-4 py-3 z-50">

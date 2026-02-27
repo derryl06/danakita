@@ -2,12 +2,12 @@
 
 import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
-import { CheckCircle2, Circle, Users, TrendingUp, Calculator, Share2, ExternalLink } from 'lucide-react';
+import { CheckCircle2, Circle, Users, TrendingUp, Calculator, Share2, ExternalLink, FileSpreadsheet, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function PersiapanPage() {
-    const { checklist, toggleChecklist, partner, connectPartner } = useAppContext();
+    const { partner, connectPartner, targets } = useAppContext();
     const [goldPrices, setGoldPrices] = useState({
         sell: 3039000,
         buyback: 2818000,
@@ -38,8 +38,10 @@ export default function PersiapanPage() {
         }
     };
 
-    const doneCount = checklist.filter(i => i.done).length;
-    const progress = (doneCount / checklist.length) * 100;
+    // Unified progress calculation for display (based on target amounts)
+    const totalTarget = targets.reduce((acc, t) => acc + (t.target_amount || 0), 0);
+    const totalCurrent = targets.reduce((acc, t) => acc + (t.current_amount || 0), 0);
+    const overallProgress = totalTarget > 0 ? (totalCurrent / totalTarget * 100) : 0;
 
     return (
         <main className="flex-1 flex flex-col min-h-screen pb-24 bg-slate-50">
@@ -47,46 +49,39 @@ export default function PersiapanPage() {
 
             <div className="px-5 mt-6 flex flex-col gap-6">
 
-                {/* Checkbox Persiapan */}
-                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold text-slate-800">Checklist Target</h2>
-                        <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                            {doneCount}/{checklist.length}
-                        </span>
-                    </div>
+                {/* Merged Laporan & Progres Section */}
+                <section>
+                    <div
+                        onClick={() => router.push('/laporan')}
+                        className="bg-slate-900 text-white rounded-[32px] p-6 shadow-xl shadow-slate-200 relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all duration-500"
+                    >
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-indigo-500/30 transition-colors"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -ml-16 -mb-16"></div>
 
-                    <div className="w-full h-2 bg-slate-100 rounded-full mb-6 overflow-hidden">
-                        <div
-                            className="h-full bg-blue-500 transition-all duration-1000"
-                            style={{ width: `${progress}%` }}
-                        ></div>
-                    </div>
-
-                    <div className="flex flex-col gap-3">
-                        {checklist.map(item => (
-                            <div
-                                key={item.id}
-                                onClick={() => toggleChecklist(item.id)}
-                                className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${item.done ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-slate-100'}`}
-                            >
-                                {item.done ? (
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                                ) : (
-                                    <Circle className="w-5 h-5 text-slate-300" />
-                                )}
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-semibold ${item.done ? 'text-emerald-700 line-through' : 'text-slate-700'}`}>
-                                        {item.task}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                                        {item.category}
-                                    </span>
+                        <div className="relative z-10">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
+                                    <FileSpreadsheet className="w-6 h-6 text-indigo-300" />
+                                </div>
+                                <div className="flex items-center gap-1 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                                    <TrendingUp className="w-3 h-3 text-emerald-400" />
+                                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">+15% Bulan ini</span>
                                 </div>
                             </div>
-                        ))}
+
+                            <h3 className="text-xl font-black mb-1 tracking-tight">Laporan & Progres</h3>
+                            <p className="text-xs text-slate-400 mb-6 font-medium leading-relaxed">
+                                Tabunganmu tumbuh lebih cepat! Download laporan PDF & Excel untuk melihat detailnya.
+                            </p>
+
+                            <div className="flex items-center justify-between py-3 px-4 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-all">
+                                <span className="text-[11px] font-bold text-indigo-300">EKSPOR DATA SEKARANG</span>
+                                <ChevronRight className="w-4 h-4 text-indigo-300 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </section>
+
 
                 {/* Quick Tools Grid */}
                 <div className="grid grid-cols-2 gap-4">
@@ -164,23 +159,23 @@ export default function PersiapanPage() {
                             {/* Joint Progress Stats */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Bersama</p>
-                                    <p className="text-lg font-black text-slate-800">{targets.length} <span className="text-[10px] font-bold text-slate-400">DANA</span></p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Saldo</p>
+                                    <p className="text-lg font-black text-slate-800">Rp {totalCurrent.toLocaleString('id-ID')}</p>
                                 </div>
                                 <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Checklist Selesai</p>
-                                    <p className="text-lg font-black text-rose-500">{checklist.filter(i => i.done).length} / {checklist.length}</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Progress Total</p>
+                                    <p className="text-lg font-black text-rose-500">{Math.round(overallProgress)}%</p>
                                 </div>
                             </div>
 
                             <div className="bg-rose-50/30 border border-rose-100/50 p-4 rounded-2xl">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-[10px] font-bold text-rose-600 uppercase">Kontribusi Progres</span>
-                                    <span className="text-[10px] font-bold text-rose-600">{Math.round(progress)}% Total</span>
+                                    <span className="text-[10px] font-bold text-rose-600">{Math.round(overallProgress)}% Total</span>
                                 </div>
                                 <div className="w-full h-3 bg-white rounded-full overflow-hidden flex border border-rose-100 p-0.5">
-                                    <div className="h-full bg-rose-400 rounded-full" style={{ width: `${progress * 0.6}%` }}></div>
-                                    <div className="h-full bg-orange-300 rounded-full ml-0.5" style={{ width: `${progress * 0.4}%` }}></div>
+                                    <div className="h-full bg-rose-400 rounded-full" style={{ width: `${overallProgress * 0.6}%` }}></div>
+                                    <div className="h-full bg-orange-300 rounded-full ml-0.5" style={{ width: `${overallProgress * 0.4}%` }}></div>
                                 </div>
                                 <div className="flex gap-4 mt-2">
                                     <div className="flex items-center gap-1">
@@ -233,23 +228,6 @@ export default function PersiapanPage() {
                     )}
                 </div>
 
-                {/* Info Card */}
-                <div className="bg-slate-900 text-white rounded-[24px] p-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>
-                    <div className="relative z-10">
-                        <h3 className="text-sm font-bold mb-1 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-emerald-400" /> Laporan Bulanan
-                        </h3>
-                        <p className="text-xs text-slate-400 mb-6">Tabunganmu tumbuh 15% lebih cepat bulan ini. Terus semangat!</p>
-
-                        <button
-                            onClick={() => alert('Fitur Export PDF sedang disiapkan!')}
-                            className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
-                        >
-                            <Share2 className="w-4 h-4" /> Download Laporan Progress
-                        </button>
-                    </div>
-                </div>
 
             </div>
         </main>

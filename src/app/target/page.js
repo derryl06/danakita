@@ -16,8 +16,9 @@ const targetSchema = z.object({
 });
 
 export default function TargetPage() {
-    const { targets, addTarget } = useAppContext();
+    const { targets, addTarget, deleteTarget, updateTarget } = useAppContext();
     const [isAdding, setIsAdding] = useState(false);
+    const [editingTargetId, setEditingTargetId] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -44,6 +45,21 @@ export default function TargetPage() {
         return acc;
     }, {});
 
+    const handleEdit = (id) => {
+        const target = targets.find(t => t.id === id);
+        if (target) {
+            setFormData({
+                name: target.name,
+                category: target.category,
+                target_amount: target.target_amount.toString(),
+                deadline: target.deadline || '',
+                current_amount: target.current_amount.toString()
+            });
+            setEditingTargetId(id);
+            setIsAdding(true);
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setErrors({});
@@ -57,12 +73,17 @@ export default function TargetPage() {
                 current_amount: Number(formData.current_amount) || 0,
             });
 
-            addTarget({
-                id: Math.random().toString(36).substr(2, 9),
-                ...parsedData,
-            });
+            if (editingTargetId) {
+                updateTarget(editingTargetId, parsedData);
+            } else {
+                addTarget({
+                    id: Math.random().toString(36).substr(2, 9),
+                    ...parsedData,
+                });
+            }
 
             setIsAdding(false);
+            setEditingTargetId(null);
             setFormData({
                 name: '',
                 category: '',
@@ -91,8 +112,10 @@ export default function TargetPage() {
                 {isAdding ? (
                     <div className="bg-white/80 backdrop-blur-lg rounded-[24px] p-6 shadow-xl shadow-slate-200/40 border border-slate-100 mb-6">
                         <div className="flex justify-between items-center mb-6 border-b pb-4 border-slate-100/50">
-                            <h2 className="text-xl font-extrabold text-[var(--color-text-primary)] tracking-tight">Buat Target Baru</h2>
-                            <button onClick={() => setIsAdding(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 hover:rotate-90 rounded-full transition-all duration-300">
+                            <h2 className="text-xl font-extrabold text-[var(--color-text-primary)] tracking-tight">
+                                {editingTargetId ? 'Edit Target' : 'Buat Target Baru'}
+                            </h2>
+                            <button onClick={() => { setIsAdding(false); setEditingTargetId(null); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 hover:rotate-90 rounded-full transition-all duration-300">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -225,6 +248,7 @@ export default function TargetPage() {
                                                 {groupedTargets[category].map(target => (
                                                     <GoalCard
                                                         key={target.id}
+                                                        id={target.id}
                                                         name={target.name}
                                                         category={target.category}
                                                         currentAmount={target.current_amount}
@@ -232,6 +256,8 @@ export default function TargetPage() {
                                                         deadline={target.deadline}
                                                         status={target.current_amount >= target.target_amount ? 'Tercapai 🎉' : 'On track'}
                                                         statusType={target.current_amount >= target.target_amount ? 'success' : 'success'}
+                                                        onDelete={deleteTarget}
+                                                        onEdit={handleEdit}
                                                     />
                                                 ))}
                                             </div>
