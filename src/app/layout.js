@@ -5,6 +5,7 @@ import { AppProvider } from '../context/AppContext';
 import { QuickAddProvider } from '../context/QuickAddContext';
 import AuthWrapper from '../components/AuthWrapper';
 import Script from 'next/script';
+import NotificationHandler from '../components/NotificationHandler';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -14,23 +15,9 @@ export const metadata = {
   manifest: process.env.NODE_ENV === 'production' ? '/danakita/manifest.json' : '/manifest.json',
 };
 
-import { useEffect } from 'react';
-import { checkAndShowReminder } from '../utils/notifications';
-
 export default function RootLayout({ children }) {
   const isProd = process.env.NODE_ENV === 'production';
   const basePath = isProd ? '/danakita' : '';
-
-  useEffect(() => {
-    const enabled = localStorage.getItem('dk_notifications_enabled');
-    if (enabled === 'true') {
-      // Small delay to not annoy user immediately on entry
-      const timer = setTimeout(() => {
-        checkAndShowReminder();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   return (
     <html lang="id">
@@ -44,6 +31,7 @@ export default function RootLayout({ children }) {
         <AppProvider>
           <QuickAddProvider>
             <AuthWrapper>
+              <NotificationHandler />
               <div className="w-full max-w-md bg-white min-h-screen shadow-sm relative overflow-x-hidden flex flex-col h-full pb-16">
                 {children}
                 <BottomNav />
