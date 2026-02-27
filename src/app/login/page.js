@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { auth } from '../../utils/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, ArrowRight, ShieldCheck, Github } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function LoginPage() {
@@ -17,12 +17,20 @@ export default function LoginPage() {
 
     const handleGoogleLogin = async () => {
         if (!auth) {
-            setError('Konfigurasi Firebase belum terpasang. Jika di GitHub, pastikan sudah mengisi "Secrets".');
+            setError('Konfigurasi Firebase belum terpasang. Periksa GitHub Secrets!');
             return;
         }
         setLoading(true);
         setError(null);
-        // ... rest of the code
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+            router.push('/');
+        } catch (err) {
+            console.error("Google Login Error:", err);
+            setError(err.code === 'auth/popup-closed-by-user' ? 'Login dibatalkan.' : `Error: ${err.message}`);
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -43,11 +51,13 @@ export default function LoginPage() {
                 router.push('/');
             }
         } catch (err) {
+            console.error("Auth Error:", err);
             let msg = err.message;
-            if (err.code === 'auth/user-not-found') msg = 'Email tidak terdaftar';
-            if (err.code === 'auth/wrong-password') msg = 'Password salah';
-            if (err.code === 'auth/email-already-in-use') msg = 'Email sudah digunakan';
-            if (err.code === 'auth/weak-password') msg = 'Password terlalu lemah (min 6 karakter)';
+            if (err.code === 'auth/user-not-found') msg = 'Email tidak terdaftar.';
+            if (err.code === 'auth/wrong-password') msg = 'Password salah.';
+            if (err.code === 'auth/email-already-in-use') msg = 'Email sudah digunakan.';
+            if (err.code === 'auth/weak-password') msg = 'Password terlalu lemah (min 6 karakter).';
+            if (err.code === 'auth/operation-not-allowed') msg = 'Metode login ini belum diaktifkan di Firebase Console.';
             setError(msg);
             setLoading(false);
         }
@@ -171,7 +181,7 @@ export default function LoginPage() {
                             />
                             <path
                                 fill="#EA4335"
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                             />
                         </svg>
                         Google
