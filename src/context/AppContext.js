@@ -67,12 +67,13 @@ export function AppProvider({ children }) {
 
                 const qTx = query(
                     collection(db, 'transactions'),
-                    where('household_id', '==', currentProfile.household_id),
-                    orderBy('date', 'desc')
+                    where('household_id', '==', currentProfile.household_id)
                 );
                 const unsubscribeTx = onSnapshot(qTx, (snapshot) => {
                     const txArr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setTransactions(txArr);
+                    // Urutkan berdasarkan tanggal secara lokal agar tidak butuh index Firebase
+                    txArr.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+                    setTransactions(txArr.reverse()); // Terbaru di atas
                 });
 
                 return () => {
