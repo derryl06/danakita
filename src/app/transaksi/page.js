@@ -71,7 +71,7 @@ export default function TransaksiPage() {
                                     </p>
                                     {tx.note && (
                                         <p className="text-[10px] text-slate-400 italic mt-0.5 max-w-[100px] truncate">
-                                            "{tx.note}"
+                                            &quot;{tx.note}&quot;
                                         </p>
                                     )}
                                 </div>
