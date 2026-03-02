@@ -7,10 +7,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Abaikan error linting & typescript agar build tetap jalan di GitHub
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Abaikan error typescript agar build tetap jalan di GitHub
   typescript: {
     ignoreBuildErrors: true,
   },
