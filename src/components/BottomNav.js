@@ -27,7 +27,7 @@ export default function BottomNav() {
                 <div className="flex justify-between items-center text-xs">
                     {tabs.map((tab, idx) => {
                         const Icon = tab.icon;
-                        const isActive = pathname === tab.href;
+                        const isActive = tab.href ? (pathname === tab.href || pathname === `${tab.href}/`) : false;
 
                         if (tab.action) {
                             return (
