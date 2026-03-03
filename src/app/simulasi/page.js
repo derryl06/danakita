@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
 import { Calculator, Calendar, ArrowRight, Wallet, Sparkles } from 'lucide-react';
@@ -9,18 +9,15 @@ import { id } from 'date-fns/locale';
 
 export default function SimulasiPage() {
     const { targets } = useAppContext();
-    const [totalTarget, setTotalTarget] = useState(0);
-    const [tabunganSekarang, setTabunganSekarang] = useState(0);
-    const [tabunganPerBulan, setTabunganPerBulan] = useState(1000000);
-
-    useEffect(() => {
-        if (targets.length > 0) {
-            const tt = targets.reduce((acc, t) => acc + (t.target_amount || 0), 0);
-            const tc = targets.reduce((acc, t) => acc + (t.current_amount || 0), 0);
-            setTotalTarget(tt);
-            setTabunganSekarang(tc);
-        }
+    const totalTarget = useMemo(() => {
+        return targets.reduce((sum, t) => sum + (Number(t?.target_amount) || 0), 0);
     }, [targets]);
+
+    const tabunganSekarang = useMemo(() => {
+        return targets.reduce((sum, t) => sum + (Number(t?.current_amount) || 0), 0);
+    }, [targets]);
+
+    const [tabunganPerBulan, setTabunganPerBulan] = useState(1000000);
 
     const sisaTarget = totalTarget - tabunganSekarang;
     const sisaBulan = sisaTarget > 0 && tabunganPerBulan > 0 ? Math.ceil(sisaTarget / tabunganPerBulan) : 0;
@@ -60,15 +57,12 @@ export default function SimulasiPage() {
                                     </span>
                                     <span className="text-sm font-extrabold text-blue-600">Rp {totalTarget.toLocaleString('id-ID')}</span>
                                 </div>
-                                <input
-                                    type="range"
-                                    min="1000000"
-                                    max="500000000"
-                                    step="1000000"
-                                    value={totalTarget}
-                                    onChange={(e) => setTotalTarget(Number(e.target.value))}
-                                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                />
+                                <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-600 rounded-full"
+                                        style={{ width: '100%' }}
+                                    ></div>
+                                </div>
                             </div>
 
                             <div>
@@ -78,15 +72,12 @@ export default function SimulasiPage() {
                                     </span>
                                     <span className="text-sm font-extrabold text-slate-900">Rp {tabunganSekarang.toLocaleString('id-ID')}</span>
                                 </div>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={totalTarget}
-                                    step="500000"
-                                    value={tabunganSekarang}
-                                    onChange={(e) => setTabunganSekarang(Number(e.target.value))}
-                                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                                />
+                                <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-amber-500 rounded-full"
+                                        style={{ width: `${Math.min(100, (tabunganSekarang / (totalTarget || 1)) * 100)}%` }}
+                                    ></div>
+                                </div>
                             </div>
 
                             <div className="pt-4 border-t border-slate-200">

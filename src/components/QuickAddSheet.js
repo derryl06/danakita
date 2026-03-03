@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuickAdd } from '../context/QuickAddContext';
 import { useAppContext } from '../context/AppContext';
 import { X } from 'lucide-react';
@@ -18,11 +18,21 @@ export default function QuickAddSheet() {
     const [note, setNote] = useState('');
     const [errors, setErrors] = useState({});
 
+    const hasInitializedOnOpen = useRef(false);
+
     useEffect(() => {
-        if (targets.length > 0 && !targetId) {
-            setTargetId(targets[0].id);
+        if (!isOpen) {
+            hasInitializedOnOpen.current = false;
+            return;
         }
-    }, [targets, targetId]);
+
+        if (!hasInitializedOnOpen.current && targets?.length > 0) {
+            setTimeout(() => {
+                setTargetId(prev => prev || (targets.length > 0 ? targets[0].id : ''));
+            }, 0);
+            hasInitializedOnOpen.current = true;
+        }
+    }, [isOpen, targets]); // targets and isOpen are enough with functional update
 
     if (!isOpen) return null;
 

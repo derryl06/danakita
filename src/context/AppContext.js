@@ -71,9 +71,13 @@ export function AppProvider({ children }) {
                 );
                 const unsubscribeTx = onSnapshot(qTx, (snapshot) => {
                     const txArr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Urutkan berdasarkan tanggal secara lokal agar tidak butuh index Firebase
-                    txArr.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-                    setTransactions(txArr.reverse()); // Terbaru di atas
+
+                    txArr.sort((a, b) => {
+                        const aDate = a?.created_at?.toDate?.() ?? new Date(a?.date || a?.created_at || 0);
+                        const bDate = b?.created_at?.toDate?.() ?? new Date(b?.date || b?.created_at || 0);
+                        return bDate - aDate;
+                    });
+                    setTransactions(txArr);
                 });
 
                 return () => {

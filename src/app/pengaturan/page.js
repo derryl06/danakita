@@ -10,12 +10,11 @@ import { requestNotificationPermission, showNotification } from '../../utils/not
 export default function PengaturanPage() {
     const router = useRouter();
     const [darkMode, setDarkMode] = useState(false);
-    const [notifications, setNotifications] = useState(false);
-
-    useEffect(() => {
+    const [notifications, setNotifications] = useState(() => {
+        if (typeof window === 'undefined') return false;
         const saved = localStorage.getItem('dk_notifications_enabled');
-        setNotifications(saved === 'true');
-    }, []);
+        return saved === 'true';
+    });
 
     const toggleNotifications = async () => {
         const newVal = !notifications;
