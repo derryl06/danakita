@@ -32,8 +32,20 @@ export function AppProvider({ children }) {
     useEffect(() => {
         if (!auth) return;
 
+        let unsubscribeTargets = null;
+        let unsubscribeTx = null;
+
+        const cleanupListeners = () => {
+            if (unsubscribeTargets) unsubscribeTargets();
+            if (unsubscribeTx) unsubscribeTx();
+            unsubscribeTargets = null;
+            unsubscribeTx = null;
+        };
+
         const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
             setUser(fbUser);
+            cleanupListeners();
+
             if (fbUser && db) {
                 // Check/Create Profile
                 const profileRef = doc(db, 'profiles', fbUser.uid);
@@ -58,9 +70,9 @@ export function AppProvider({ children }) {
                 setProfile(currentProfile);
                 setPartner(currentProfile.partner_name ? { name: currentProfile.partner_name } : null);
 
-                // Setup Real-time Listeners for Targets & Transactions
+                // Setup Real-time Listeners
                 const qTargets = query(collection(db, 'targets'), where('household_id', '==', currentProfile.household_id));
-                const unsubscribeTargets = onSnapshot(qTargets, (snapshot) => {
+                unsubscribeTargets = onSnapshot(qTargets, (snapshot) => {
                     const targetsArr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     setTargets(targetsArr);
                 });
@@ -69,7 +81,7 @@ export function AppProvider({ children }) {
                     collection(db, 'transactions'),
                     where('household_id', '==', currentProfile.household_id)
                 );
-                const unsubscribeTx = onSnapshot(qTx, (snapshot) => {
+                unsubscribeTx = onSnapshot(qTx, (snapshot) => {
                     const txArr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
                     txArr.sort((a, b) => {
@@ -79,11 +91,6 @@ export function AppProvider({ children }) {
                     });
                     setTransactions(txArr);
                 });
-
-                return () => {
-                    unsubscribeTargets();
-                    unsubscribeTx();
-                };
             } else {
                 // Load from LocalStorage for Guest Mode
                 const savedTargets = localStorage.getItem('dk_targets');
@@ -103,7 +110,10 @@ export function AppProvider({ children }) {
             }
         });
 
-        return () => unsubscribeAuth();
+        return () => {
+            unsubscribeAuth();
+            cleanupListeners();
+        };
     }, []);
 
     // Sync Guest Data to LocalStorage

@@ -6,6 +6,7 @@ import TopBar from '../components/TopBar';
 import GoalCard from '../components/GoalCard';
 import { differenceInMonths, parseISO, isValid } from 'date-fns';
 import { ArrowRight, Sparkles, Calendar } from 'lucide-react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Beranda() {
@@ -13,17 +14,16 @@ export default function Beranda() {
   const { setIsOpen } = useQuickAdd();
   const router = useRouter();
 
-  const calculateTargetUtama = () => {
+  const targetUtama = useMemo(() => {
     if (targets.length === 0) return null;
-    const totalTarget = targets.reduce((acc, t) => acc + (t.target_amount || 0), 0);
-    const totalCurrent = targets.reduce((acc, t) => acc + (t.current_amount || 0), 0);
+    const totalTarget = targets.reduce((acc, t) => acc + (Number(t.target_amount) || 0), 0);
+    const totalCurrent = targets.reduce((acc, t) => acc + (Number(t.current_amount) || 0), 0);
 
-    // Temukan deadline terjauh untuk target utama
     const validDeadlines = targets
       .filter(t => t.deadline)
       .map(t => parseISO(t.deadline))
       .filter(d => isValid(d));
-    const furthestDeadline = validDeadlines.length > 0 ? new Date(Math.max(...validDeadlines)) : null;
+    const furthestDeadline = validDeadlines.length > 0 ? new Date(Math.max(...validDeadlines.map(d => d.getTime()))) : null;
 
     return {
       id: 'main',
@@ -32,28 +32,30 @@ export default function Beranda() {
       current_amount: totalCurrent,
       deadline: furthestDeadline ? furthestDeadline.toISOString() : null
     };
-  };
+  }, [targets]);
 
-  const targetUtama = calculateTargetUtama();
+  const { perMonth, status, type } = useMemo(() => {
+    if (!targetUtama || !targetUtama.deadline || targetUtama.target_amount <= 0) {
+      return { perMonth: 0, status: 'Belum disetel', type: 'neutral' };
+    }
 
-  const calculatePerMonthAndStatus = (target) => {
-    if (!target || !target.deadline || target.target_amount <= 0) return { perMonth: 0, status: 'Belum disetel', type: 'neutral' };
-
-    const parsedDate = parseISO(target.deadline);
+    const parsedDate = parseISO(targetUtama.deadline);
     if (!isValid(parsedDate)) return { perMonth: 0, status: 'Belum disetel', type: 'neutral' };
 
     const sisaBulan = differenceInMonths(parsedDate, new Date());
-    if (sisaBulan <= 0) return { perMonth: 0, status: 'Deadline berlalu', type: 'warning' };
 
-    const sisaTarget = target.target_amount - target.current_amount;
+    // If deadline is in the future but less than 1 month, treat as 1 month to avoid Infinity
+    const effectiveSisaBulan = sisaBulan <= 0 ? 0 : sisaBulan;
+
+    const sisaTarget = targetUtama.target_amount - targetUtama.current_amount;
     if (sisaTarget <= 0) return { perMonth: 0, status: 'Tercapai 🎉', type: 'success' };
 
-    const butuhPerBulan = sisaTarget / sisaBulan;
+    if (effectiveSisaBulan <= 0) return { perMonth: 0, status: 'Deadline berlalu', type: 'warning' };
+
+    const butuhPerBulan = sisaTarget / effectiveSisaBulan;
 
     return { perMonth: butuhPerBulan, status: 'On track', type: 'success' };
-  };
-
-  const { perMonth, status, type } = calculatePerMonthAndStatus(targetUtama);
+  }, [targetUtama]);
 
   return (
     <main className="flex-1 flex flex-col min-h-screen pb-24">
