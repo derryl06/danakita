@@ -13,7 +13,7 @@ export default function BantuanPage() {
 
     const faqs = [
         { q: "Bagaimana cara mencatat tabungan?", a: "Pilih menu Tambah di bagian bawah aplikasi, lalu pilih target tabungan dan masukkan nominalnya." },
-        { q: "Apakah data saya aman?", a: "Ya, untuk saat ini data hanya disimpan pada perangkat lokal Anda (belum tersinkron dengan server)." },
+        { q: "Apakah data saya aman?", a: "Ya, data Anda tersimpan secara aman di cloud (Firebase) jika Anda login, sehingga tetap terjaga meskipun ganti perangkat." },
         { q: "Bisa tambah kategori baru?", a: "Saat ini kategori sudah disesuaikan default untuk memudahkan pengelolaan dana general. Penambahan custom kategori akan hadir pada versi selanjutnya." }
     ];
 

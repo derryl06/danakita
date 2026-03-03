@@ -207,6 +207,8 @@ export default function Beranda() {
                       category={t.category}
                       currentAmount={t.current_amount}
                       targetAmount={t.target_amount}
+                      isInflationAdjusted={t.is_inflation_adjusted}
+                      originalTargetAmount={t.original_target_amount}
                       onDelete={deleteTarget}
                       onEdit={(id) => router.push('/target')}
                     />

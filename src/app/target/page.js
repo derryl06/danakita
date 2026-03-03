@@ -5,7 +5,8 @@ import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
 import GoalCard from '../../components/GoalCard';
 import { z } from 'zod';
-import { Plus, X, ChevronDown, ChevronRight, Tags } from 'lucide-react';
+import { Plus, X, ChevronDown, ChevronRight, Tags, Info, Sparkles, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { calculateInflationAdjusted } from '../../utils/finance';
 
 const targetSchema = z.object({
     name: z.string().min(1, 'Nama target wajib diisi'),
@@ -13,6 +14,9 @@ const targetSchema = z.object({
     target_amount: z.number().min(1000, 'Minimal Rp 1.000'),
     deadline: z.string().min(1, 'Deadline wajib diisi'),
     current_amount: z.number().min(0, 'Tabungan tidak boleh negatif'),
+    is_inflation_adjusted: z.boolean().optional(),
+    inflation_rate: z.number().optional(),
+    original_target_amount: z.number().optional(),
 });
 
 export default function TargetPage() {
@@ -26,10 +30,15 @@ export default function TargetPage() {
         target_amount: '',
         deadline: '',
         current_amount: '',
+        is_inflation_adjusted: false,
+        inflation_rate: 5,
     });
 
     const [errors, setErrors] = useState({});
     const [expandedCategories, setExpandedCategories] = useState({});
+    const [importLink, setImportLink] = useState('');
+    const [isImporting, setIsImporting] = useState(false);
+    const [showImporter, setShowImporter] = useState(false);
 
     const toggleCategory = (cat) => {
         setExpandedCategories(prev => ({
@@ -51,13 +60,42 @@ export default function TargetPage() {
             setFormData({
                 name: target.name,
                 category: target.category,
-                target_amount: target.target_amount.toString(),
+                target_amount: target.is_inflation_adjusted ? (target.original_target_amount || target.target_amount).toString() : target.target_amount.toString(),
                 deadline: target.deadline || '',
-                current_amount: target.current_amount.toString()
+                current_amount: target.current_amount.toString(),
+                is_inflation_adjusted: target.is_inflation_adjusted || false,
+                inflation_rate: target.inflation_rate || 5,
             });
             setEditingTargetId(id);
             setIsAdding(true);
         }
+    };
+
+    const handleImportLink = async (e) => {
+        e.preventDefault();
+        if (!importLink) return;
+
+        setIsImporting(true);
+        // Simulate "Analyzing"
+        await new Promise(r => setTimeout(r, 1500));
+
+        let name = "Produk Impian";
+        let amount = "5000000";
+
+        if (importLink.includes('shopee.co.id')) name = "Gadget Unggulan Shopee";
+        else if (importLink.includes('tokopedia.com')) name = "Barang Idaman Tokopedia";
+
+        setFormData({
+            ...formData,
+            name: name,
+            target_amount: amount,
+            category: 'General'
+        });
+
+        setIsImporting(false);
+        setShowImporter(false);
+        setImportLink('');
+        setIsAdding(true);
     };
 
     const handleSubmit = (e) => {
@@ -65,12 +103,20 @@ export default function TargetPage() {
         setErrors({});
 
         try {
+            const rawTargetAmount = Number(formData.target_amount) || 0;
+            const finalTargetAmount = formData.is_inflation_adjusted
+                ? calculateInflationAdjusted(rawTargetAmount, formData.deadline, formData.inflation_rate)
+                : rawTargetAmount;
+
             const parsedData = targetSchema.parse({
                 name: formData.name,
                 category: formData.category,
-                target_amount: Number(formData.target_amount) || 0,
+                target_amount: finalTargetAmount,
                 deadline: formData.deadline,
                 current_amount: Number(formData.current_amount) || 0,
+                is_inflation_adjusted: formData.is_inflation_adjusted,
+                inflation_rate: Number(formData.inflation_rate) || 5,
+                original_target_amount: rawTargetAmount
             });
 
             if (editingTargetId) {
@@ -90,6 +136,8 @@ export default function TargetPage() {
                 target_amount: '',
                 deadline: '',
                 current_amount: '',
+                is_inflation_adjusted: false,
+                inflation_rate: 5
             });
         } catch (err) {
             if (err instanceof z.ZodError) {
@@ -191,6 +239,50 @@ export default function TargetPage() {
                                 {errors.deadline && <p className="text-red-500 text-xs mt-1 ml-1">{errors.deadline}</p>}
                             </div>
 
+                            <div className="bg-blue-50/50 p-5 rounded-[24px] border border-blue-100 flex flex-col gap-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-blue-500" />
+                                        <span className="text-xs font-bold text-blue-900">Penyesuaian Inflasi</span>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_inflation_adjusted}
+                                            onChange={e => setFormData({ ...formData, is_inflation_adjusted: e.target.checked })}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                {formData.is_inflation_adjusted ? (
+                                    <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-2">
+                                        <p className="text-[10px] text-blue-600 font-medium leading-relaxed">
+                                            Harga barang di masa depan akan lebih mahal. Kami akan menghitung target yang harus dikumpulkan agar daya beli tetap sama.
+                                        </p>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] font-bold text-blue-400 mb-1 uppercase">Estimasi Inflasi (%)</label>
+                                                <input
+                                                    type="number"
+                                                    value={formData.inflation_rate}
+                                                    onChange={e => setFormData({ ...formData, inflation_rate: e.target.value })}
+                                                    className="w-full bg-white border border-blue-100 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500"
+                                                />
+                                            </div>
+                                            <div className="flex-[2] bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
+                                                <label className="block text-[8px] font-black text-slate-400 mb-1 uppercase">Target Masa Depan</label>
+                                                <p className="text-sm font-black text-blue-700">
+                                                    Rp {calculateInflationAdjusted(Number(formData.target_amount) || 0, formData.deadline, formData.inflation_rate).toLocaleString('id-ID')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-[10px] text-slate-400 font-medium">Aktifkan untuk menghitung kenaikan harga barang di masa depan.</p>
+                                )}
+                            </div>
+
                             <button
                                 type="submit"
                                 className="w-full bg-gradient-to-r from-[var(--color-primary)] to-blue-600 text-white py-4 rounded-[16px] font-bold mt-4 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-[0.98] group"
@@ -201,15 +293,57 @@ export default function TargetPage() {
                     </div>
                 ) : (
                     <>
-                        <button
-                            onClick={() => setIsAdding(true)}
-                            className="w-full bg-slate-50/50 border-2 border-dashed border-slate-200 text-slate-500 py-5 rounded-[24px] font-semibold mb-6 flex flex-col items-center justify-center gap-3 hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.05)] transition-all duration-300 active:scale-[0.98] group"
-                        >
-                            <div className="p-3 bg-white rounded-full shadow-sm group-hover:bg-blue-50 group-hover:scale-110 transition-all">
-                                <Plus className="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                        <div className="flex gap-4 mb-6">
+                            <button
+                                onClick={() => setIsAdding(true)}
+                                className="flex-1 bg-slate-50/50 border-2 border-dashed border-slate-200 text-slate-500 py-5 rounded-[24px] font-semibold flex flex-col items-center justify-center gap-2 hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 hover:-translate-y-0.5 transition-all duration-300 group"
+                            >
+                                <Plus className="w-5 h-5 text-slate-400 group-hover:text-blue-500" />
+                                <span className="text-[11px] uppercase tracking-wider">Target Manual</span>
+                            </button>
+                            <button
+                                onClick={() => setShowImporter(true)}
+                                className="flex-1 bg-blue-50/30 border-2 border-dashed border-blue-200 text-blue-500 py-5 rounded-[24px] font-semibold flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-400 hover:-translate-y-0.5 transition-all duration-300 group"
+                            >
+                                <Sparkles className="w-5 h-5 text-blue-400 group-hover:text-blue-600" />
+                                <span className="text-[11px] uppercase tracking-wider">Impor Wishlist</span>
+                            </button>
+                        </div>
+
+                        {showImporter && (
+                            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[28px] p-6 text-white mb-6 shadow-xl shadow-blue-500/20 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                                <div className="flex justify-between items-center mb-4 relative z-10">
+                                    <h3 className="font-bold flex items-center gap-2">
+                                        <LinkIcon className="w-4 h-4" /> Impor dari Link
+                                    </h3>
+                                    <button onClick={() => setShowImporter(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-blue-100 mb-4 font-medium leading-relaxed">
+                                    Tempel link Shopee / Tokopedia ke bawah ini, Danakita akan otomatis mengambil data harga (Simulasi).
+                                </p>
+                                <form onSubmit={handleImportLink} className="relative z-10">
+                                    <div className="relative">
+                                        <input
+                                            type="url"
+                                            value={importLink}
+                                            onChange={e => setImportLink(e.target.value)}
+                                            placeholder="https://shopee.co.id/produk..."
+                                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs focus:outline-none focus:bg-white text-white focus:text-slate-800 placeholder:text-blue-200/50 mb-3"
+                                            required
+                                        />
+                                    </div>
+                                    <button
+                                        disabled={isImporting}
+                                        className="w-full bg-white text-blue-600 py-3 rounded-xl font-black text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'ANAlISIS DATA SEKARANG ✨'}
+                                    </button>
+                                </form>
                             </div>
-                            Buat Target Baru
-                        </button>
+                        )}
 
                         <div className="flex flex-col gap-4">
                             {targets.length === 0 ? (
@@ -254,6 +388,8 @@ export default function TargetPage() {
                                                         currentAmount={target.current_amount}
                                                         targetAmount={target.target_amount}
                                                         deadline={target.deadline}
+                                                        isInflationAdjusted={target.is_inflation_adjusted}
+                                                        originalTargetAmount={target.original_target_amount}
                                                         status={target.current_amount >= target.target_amount ? 'Tercapai 🎉' : 'On track'}
                                                         statusType={target.current_amount >= target.target_amount ? 'success' : 'success'}
                                                         onDelete={deleteTarget}

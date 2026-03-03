@@ -10,9 +10,9 @@ export default function LaporanPage() {
     const { targets, transactions } = useAppContext();
     const router = useRouter();
 
-    const totalTarget = targets.reduce((acc, t) => acc + (t.target_amount || 0), 0);
-    const totalCurrent = targets.reduce((acc, t) => acc + (t.current_amount || 0), 0);
-    const progress = totalTarget > 0 ? (totalCurrent / totalTarget * 100).toFixed(1) : 0;
+    const totalTarget = targets.reduce((acc, t) => acc + (Number(t.target_amount) || 0), 0);
+    const totalCurrent = targets.reduce((acc, t) => acc + (Number(t.current_amount) || 0), 0);
+    const progress = totalTarget > 0 ? ((totalCurrent / totalTarget) * 100).toFixed(1) : 0;
 
     const handleBack = () => {
         router.back();
@@ -119,7 +119,7 @@ export default function LaporanPage() {
                     </p>
                     <div className="flex items-center gap-2 text-[10px] font-bold bg-white/10 w-fit px-3 py-1.5 rounded-full">
                         <PieChart className="w-3 h-3" />
-                        DATA TERENKRIPSI LOKAL
+                        CLOUDSYNC AKTIF
                     </div>
                 </div>
 

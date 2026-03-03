@@ -39,8 +39,8 @@ export default function PersiapanPage() {
     };
 
     // Unified progress calculation for display (based on target amounts)
-    const totalTarget = targets.reduce((acc, t) => acc + (t.target_amount || 0), 0);
-    const totalCurrent = targets.reduce((acc, t) => acc + (t.current_amount || 0), 0);
+    const totalTarget = targets.reduce((acc, t) => acc + (Number(t.target_amount) || 0), 0);
+    const totalCurrent = targets.reduce((acc, t) => acc + (Number(t.current_amount) || 0), 0);
     const overallProgress = totalTarget > 0 ? (totalCurrent / totalTarget * 100) : 0;
 
     return (

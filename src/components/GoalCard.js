@@ -13,6 +13,8 @@ export default function GoalCard({
     isHero = false,
     status = 'Belum disetel',
     statusType = 'neutral',
+    isInflationAdjusted = false,
+    originalTargetAmount = 0,
     actionButton,
     onDelete,
     onEdit
@@ -54,8 +56,18 @@ export default function GoalCard({
                             {formatCur(currentAmount)}
                         </p>
                         {targetAmount > 0 && (
-                            <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                            <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">
                                 DARI {formatCur(targetAmount)}
+                                {isInflationAdjusted && (
+                                    <span className="ml-1.5 text-blue-500 bg-blue-50 px-1 py-0.5 rounded-md border border-blue-100/50">
+                                        +INFLASI
+                                    </span>
+                                )}
+                            </p>
+                        )}
+                        {isInflationAdjusted && originalTargetAmount > 0 && (
+                            <p className="text-[8px] font-bold text-slate-300 mt-0.5">
+                                Nilai asli: {formatCur(originalTargetAmount)}
                             </p>
                         )}
                     </div>
