@@ -180,7 +180,11 @@ export function AppProvider({ children }) {
                 category: target.category,
                 target_amount: target.target_amount,
                 current_amount: target.current_amount || 0,
-                deadline: target.deadline,
+                deadline: target.deadline || null,
+                is_inflation_adjusted: target.is_inflation_adjusted || false,
+                inflation_rate: target.inflation_rate || 5,
+                original_target_amount: target.original_target_amount || target.target_amount,
+                storage_location: target.storage_location || 'Bank',
                 household_id: profile.household_id,
                 created_by: user.uid,
                 created_at: serverTimestamp()
@@ -202,11 +206,36 @@ export function AppProvider({ children }) {
 
     const updateTarget = async (id, updatedData) => {
         if (user) {
-            await updateDoc(doc(db, 'targets', id), updatedData);
+            await updateDoc(doc(db, 'targets', id), {
+                ...updatedData,
+                updated_at: serverTimestamp()
+            });
         } else {
             setTargets(prev => prev.map(t =>
                 t.id === id ? { ...t, ...updatedData } : t
             ));
+        }
+    };
+
+    const reactToTransaction = async (transactionId, reaction) => {
+        if (!user) return;
+        try {
+            const tx = transactions.find(t => t.id === transactionId);
+            if (!tx) return;
+
+            const currentReactions = tx.reactions || {};
+            // Toggle reaction: if same reaction exists, remove it. Else set it.
+            if (currentReactions[user.uid] === reaction) {
+                delete currentReactions[user.uid];
+            } else {
+                currentReactions[user.uid] = reaction;
+            }
+
+            await updateDoc(doc(db, 'transactions', transactionId), {
+                reactions: currentReactions
+            });
+        } catch (error) {
+            console.error("React to transaction error:", error);
         }
     };
 
@@ -233,7 +262,8 @@ export function AppProvider({ children }) {
             addTarget,
             deleteTarget,
             updateTarget,
-            connectPartner
+            connectPartner,
+            reactToTransaction
         }}>
             {children}
         </AppContext.Provider>

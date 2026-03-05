@@ -2,7 +2,7 @@
 
 import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
-import { FileText, Download, Share2, TrendingUp, PieChart, History, ChevronLeft, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, Share2, TrendingUp, PieChart, History, ChevronLeft, FileSpreadsheet, Building2, Gem, Wallet, LineChart } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
 import { useRouter } from 'next/navigation';
 
@@ -67,6 +67,33 @@ export default function LaporanPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Asset Allocation Summary */}
+                <section>
+                    <h3 className="text-sm font-bold text-slate-500 mb-4 ml-2 uppercase tracking-wider">Sebaran Aset</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        {[
+                            { name: 'Bank', icon: <Building2 className="w-4 h-4" />, color: 'blue' },
+                            { name: 'Emas', icon: <Gem className="w-4 h-4" />, color: 'amber' },
+                            { name: 'Tunai', icon: <Wallet className="w-4 h-4" />, color: 'emerald' },
+                            { name: 'Reksadana', icon: <LineChart className="w-4 h-4" />, color: 'indigo' },
+                        ].map(loc => {
+                            const amount = targets
+                                .filter(t => (t.storage_location || 'Bank') === loc.name)
+                                .reduce((acc, t) => acc + (Number(t.current_amount) || 0), 0);
+
+                            return (
+                                <div key={loc.name} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 bg-${loc.color}-50 text-${loc.color}-600`}>
+                                        {loc.icon}
+                                    </div>
+                                    <span className="block text-[10px] font-bold text-slate-400 uppercase">{loc.name}</span>
+                                    <span className="text-xs font-black text-slate-700">Rp {amount.toLocaleString('id-ID')}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
 
                 {/* Export Options */}
                 <section>

@@ -2,11 +2,11 @@
 
 import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
-import { ChevronLeft, ArrowUpRight, ArrowDownLeft, Calendar, Tag } from 'lucide-react';
+import { ChevronLeft, ArrowUpRight, ArrowDownLeft, Calendar, Tag, Flame } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function TransaksiPage() {
-    const { transactions, targets } = useAppContext();
+    const { transactions, targets, reactToTransaction, user } = useAppContext();
     const router = useRouter();
 
     const getTargetName = (id) => {
@@ -63,6 +63,25 @@ export default function TransaksiPage() {
                                         <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight">
                                             {formatDate(tx.date)}
                                         </p>
+
+                                        {/* Interaction Section */}
+                                        {user && (
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <button
+                                                    onClick={() => reactToTransaction(tx.id, '🔥')}
+                                                    className={`p-1.5 rounded-lg flex items-center gap-1 text-[9px] font-black transition-all border ${tx.reactions?.[user.uid] === '🔥'
+                                                        ? 'bg-orange-50 text-orange-600 border-orange-200 shadow-sm'
+                                                        : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-orange-400'
+                                                        }`}
+                                                >
+                                                    <Flame className={`w-3 h-3 ${tx.reactions?.[user.uid] === '🔥' ? 'fill-orange-500' : ''}`} />
+                                                    {Object.keys(tx.reactions || {}).length > 0 && (
+                                                        <span className="bg-orange-600 text-white px-1 rounded-sm text-[8px]">{Object.keys(tx.reactions).length}</span>
+                                                    )}
+                                                    KIRIM SEMANGAT!
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="text-right">

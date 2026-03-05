@@ -209,6 +209,7 @@ export default function Beranda() {
                       targetAmount={t.target_amount}
                       isInflationAdjusted={t.is_inflation_adjusted}
                       originalTargetAmount={t.original_target_amount}
+                      storageLocation={t.storage_location}
                       onDelete={deleteTarget}
                       onEdit={(id) => router.push('/target')}
                     />

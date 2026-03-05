@@ -1,4 +1,4 @@
-import { Heart, Home, GraduationCap, AlertCircle, Coins, ChevronRight, Trash2, Pencil } from 'lucide-react';
+import { Heart, Home, GraduationCap, AlertCircle, Coins, ChevronRight, Trash2, Pencil, Building2, Gem, Wallet, LineChart } from 'lucide-react';
 import ProgressBar from './ProgressBar';
 import StatusChip from './StatusChip';
 
@@ -15,6 +15,7 @@ export default function GoalCard({
     statusType = 'neutral',
     isInflationAdjusted = false,
     originalTargetAmount = 0,
+    storageLocation = 'Bank',
     actionButton,
     onDelete,
     onEdit
@@ -28,6 +29,16 @@ export default function GoalCard({
             case 'pendidikan': return <GraduationCap className="w-4 h-4 text-indigo-500" />;
             case 'darurat': return <AlertCircle className="w-4 h-4 text-amber-500" />;
             default: return <Coins className="w-4 h-4 text-emerald-500" />;
+        }
+    };
+
+    const getStorageIcon = (loc) => {
+        switch (loc) {
+            case 'Bank': return <Building2 className="w-3 h-3 text-blue-500" />;
+            case 'Emas': return <Gem className="w-3 h-3 text-amber-500" />;
+            case 'Tunai': return <Wallet className="w-3 h-3 text-emerald-500" />;
+            case 'Reksadana': return <LineChart className="w-3 h-3 text-indigo-500" />;
+            default: return <Building2 className="w-3 h-3 text-blue-500" />;
         }
     };
 
@@ -109,10 +120,17 @@ export default function GoalCard({
                 <ProgressBar progress={progress} />
             </div>
 
-            <div className="flex justify-between items-center text-[11px] font-medium text-slate-400 mb-4 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100/50">
-                <span>🎯 {targetAmount > 0 ? formatDate(deadline) : 'Belum disetel'}</span>
+            <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 mb-4 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+                <div className="flex items-center gap-2">
+                    <span>🎯 {targetAmount > 0 ? formatDate(deadline) : 'Belum disetel'}</span>
+                    <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                    <div className="flex items-center gap-1 text-slate-500">
+                        {getStorageIcon(storageLocation)}
+                        {storageLocation}
+                    </div>
+                </div>
                 {neededPerMonth > 0 && (
-                    <span className="font-bold text-blue-600">Butuh {formatCur(neededPerMonth)}/bln</span>
+                    <span className="text-blue-600">Butuh {formatCur(neededPerMonth)}/bln</span>
                 )}
             </div>
 

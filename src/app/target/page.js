@@ -17,6 +17,7 @@ const targetSchema = z.object({
     is_inflation_adjusted: z.boolean().optional(),
     inflation_rate: z.number().optional(),
     original_target_amount: z.number().optional(),
+    storage_location: z.string().min(1, 'Pilih tempat simpan'),
 });
 
 export default function TargetPage() {
@@ -32,6 +33,7 @@ export default function TargetPage() {
         current_amount: '',
         is_inflation_adjusted: false,
         inflation_rate: 5,
+        storage_location: 'Bank',
     });
 
     const [errors, setErrors] = useState({});
@@ -65,6 +67,7 @@ export default function TargetPage() {
                 current_amount: target.current_amount.toString(),
                 is_inflation_adjusted: target.is_inflation_adjusted || false,
                 inflation_rate: target.inflation_rate || 5,
+                storage_location: target.storage_location || 'Bank',
             });
             setEditingTargetId(id);
             setIsAdding(true);
@@ -116,7 +119,8 @@ export default function TargetPage() {
                 current_amount: Number(formData.current_amount) || 0,
                 is_inflation_adjusted: formData.is_inflation_adjusted,
                 inflation_rate: Number(formData.inflation_rate) || 5,
-                original_target_amount: rawTargetAmount
+                original_target_amount: rawTargetAmount,
+                storage_location: formData.storage_location
             });
 
             if (editingTargetId) {
@@ -137,7 +141,8 @@ export default function TargetPage() {
                 deadline: '',
                 current_amount: '',
                 is_inflation_adjusted: false,
-                inflation_rate: 5
+                inflation_rate: 5,
+                storage_location: 'Bank'
             });
         } catch (err) {
             if (err instanceof z.ZodError) {
@@ -196,6 +201,21 @@ export default function TargetPage() {
                                     <option value="Darurat">Dana Darurat</option>
                                 </select>
                                 {errors.category && <p className="text-red-500 text-xs mt-1 ml-1">{errors.category}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1.5 ml-1">Tempat Simpan</label>
+                                <select
+                                    value={formData.storage_location}
+                                    onChange={e => setFormData({ ...formData, storage_location: e.target.value })}
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] bg-white"
+                                >
+                                    <option value="Bank">🏦 Bank / Digital Bank</option>
+                                    <option value="Emas">💎 Emas Fisik / Digital</option>
+                                    <option value="Tunai">💵 Tunai / Cash</option>
+                                    <option value="Reksadana">📈 Reksadana / Saham</option>
+                                </select>
+                                {errors.storage_location && <p className="text-red-500 text-xs mt-1 ml-1">{errors.storage_location}</p>}
                             </div>
 
                             <div>
@@ -390,6 +410,7 @@ export default function TargetPage() {
                                                         deadline={target.deadline}
                                                         isInflationAdjusted={target.is_inflation_adjusted}
                                                         originalTargetAmount={target.original_target_amount}
+                                                        storageLocation={target.storage_location}
                                                         status={target.current_amount >= target.target_amount ? 'Tercapai 🎉' : 'On track'}
                                                         statusType={target.current_amount >= target.target_amount ? 'success' : 'success'}
                                                         onDelete={deleteTarget}
