@@ -40,6 +40,7 @@ export default function RiwayatPage() {
                                 date={t.date}
                                 note={t.note}
                                 targetName={getTargetName(t.targetId)}
+                                userName={t.user_name}
                             />
                         ))}
                     </div>

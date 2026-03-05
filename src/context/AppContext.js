@@ -27,6 +27,13 @@ export function AppProvider({ children }) {
     const [transactions, setTransactions] = useState([]);
     const [isDemoMode, setIsDemoMode] = useState(false);
     const [partner, setPartner] = useState(null);
+    const [categories, setCategories] = useState(['General', 'Menikah', 'Pendidikan', 'Rumah', 'Darurat']);
+    const [isPrivacyMode, setIsPrivacyMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('dk_privacy_mode') === 'true';
+        }
+        return false;
+    });
 
     // Monitor Auth Status
     useEffect(() => {
@@ -34,12 +41,15 @@ export function AppProvider({ children }) {
 
         let unsubscribeTargets = null;
         let unsubscribeTx = null;
+        let unsubscribeHousehold = null;
 
         const cleanupListeners = () => {
             if (unsubscribeTargets) unsubscribeTargets();
             if (unsubscribeTx) unsubscribeTx();
+            if (unsubscribeHousehold) unsubscribeHousehold();
             unsubscribeTargets = null;
             unsubscribeTx = null;
+            unsubscribeHousehold = null;
         };
 
         const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
@@ -91,11 +101,20 @@ export function AppProvider({ children }) {
                     });
                     setTransactions(txArr);
                 });
+
+                // Listen to Household for shared categories
+                const householdRef = doc(db, 'households', currentProfile.household_id);
+                unsubscribeHousehold = onSnapshot(householdRef, (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().categories) {
+                        setCategories(docSnap.data().categories);
+                    }
+                });
             } else {
                 // Load from LocalStorage for Guest Mode
                 const savedTargets = localStorage.getItem('dk_targets');
                 const savedTx = localStorage.getItem('dk_transactions');
                 const savedPartner = localStorage.getItem('dk_partner');
+                const savedCategories = localStorage.getItem('dk_categories');
 
                 if (savedTargets) setTargets(JSON.parse(savedTargets));
                 else setTargets([]);
@@ -105,6 +124,9 @@ export function AppProvider({ children }) {
 
                 if (savedPartner) setPartner(JSON.parse(savedPartner));
                 else setPartner(null);
+
+                if (savedCategories) setCategories(JSON.parse(savedCategories));
+                else setCategories(['General', 'Menikah', 'Pendidikan', 'Rumah', 'Darurat']);
 
                 setProfile(null);
             }
@@ -122,8 +144,9 @@ export function AppProvider({ children }) {
             localStorage.setItem('dk_targets', JSON.stringify(targets));
             localStorage.setItem('dk_transactions', JSON.stringify(transactions));
             localStorage.setItem('dk_partner', JSON.stringify(partner));
+            localStorage.setItem('dk_categories', JSON.stringify(categories));
         }
-    }, [targets, transactions, partner, user, isDemoMode]);
+    }, [targets, transactions, partner, categories, user, isDemoMode]);
 
     const loadDemoData = () => {
         setTargets([
@@ -147,6 +170,7 @@ export function AppProvider({ children }) {
                 ...transaction,
                 household_id: profile.household_id,
                 created_by: user.uid,
+                user_name: profile.username || user.email.split('@')[0], // For sharing context
                 date: new Date().toISOString() // Or serverTimestamp but ISO is easier for existing UI
             };
             await addDoc(collection(db, 'transactions'), txData);
@@ -160,7 +184,8 @@ export function AppProvider({ children }) {
                 await updateDoc(targetRef, { current_amount: newAmount });
             }
         } else {
-            setTransactions(prev => [transaction, ...prev]);
+            const txWithUser = { ...transaction, user_name: 'Saya' };
+            setTransactions(prev => [txWithUser, ...prev]);
             setTargets(prev => prev.map(t => {
                 if (t.id === transaction.targetId) {
                     return {
@@ -248,12 +273,57 @@ export function AppProvider({ children }) {
         }
     };
 
+    const togglePrivacyMode = () => {
+        const newVal = !isPrivacyMode;
+        setIsPrivacyMode(newVal);
+        localStorage.setItem('dk_privacy_mode', newVal.toString());
+    };
+
+    const joinHousehold = async (targetHouseholdId) => {
+        if (!user || !profile) return { success: false, message: 'Harus login dulu' };
+        if (!targetHouseholdId || targetHouseholdId.length < 5) return { success: false, message: 'ID tidak valid' };
+
+        try {
+            // Update user profile to use new household_id
+            await updateDoc(doc(db, 'profiles', user.uid), {
+                household_id: targetHouseholdId
+            });
+            // Profile state will be updated by onSnapshot if we have one, 
+            // but for now let's just refresh current profile state manually or let them reload
+            setProfile(prev => ({ ...prev, household_id: targetHouseholdId }));
+            return { success: true };
+        } catch (error) {
+            console.error("Join household error:", error);
+            return { success: false, message: error.message };
+        }
+    };
+
+    const addCategory = async (newCat) => {
+        if (categories.includes(newCat)) return;
+        const updatedCats = [...categories, newCat];
+        setCategories(updatedCats);
+
+        if (user && profile) {
+            await setDoc(doc(db, 'households', profile.household_id), { categories: updatedCats }, { merge: true });
+        }
+    };
+
+    const removeCategory = async (cat) => {
+        const updatedCats = categories.filter(c => c !== cat);
+        setCategories(updatedCats);
+
+        if (user && profile) {
+            await setDoc(doc(db, 'households', profile.household_id), { categories: updatedCats }, { merge: true });
+        }
+    };
+
     return (
         <AppContext.Provider value={{
             user,
             profile,
             targets,
             transactions,
+            categories,
             isDemoMode,
             partner,
             loadDemoData,
@@ -263,7 +333,12 @@ export function AppProvider({ children }) {
             deleteTarget,
             updateTarget,
             connectPartner,
-            reactToTransaction
+            reactToTransaction,
+            addCategory,
+            removeCategory,
+            isPrivacyMode,
+            togglePrivacyMode,
+            joinHousehold
         }}>
             {children}
         </AppContext.Provider>

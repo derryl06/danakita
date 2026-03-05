@@ -1,6 +1,7 @@
-import { Heart, Home, GraduationCap, AlertCircle, Coins, ChevronRight, Trash2, Pencil, Building2, Gem, Wallet, LineChart } from 'lucide-react';
+import { Heart, Home, GraduationCap, AlertCircle, Coins, ChevronRight, Trash2, Pencil, Building2, Gem, Wallet, LineChart, Tags } from 'lucide-react';
 import ProgressBar from './ProgressBar';
 import StatusChip from './StatusChip';
+import { useAppContext } from '../context/AppContext';
 
 export default function GoalCard({
     id,
@@ -20,6 +21,7 @@ export default function GoalCard({
     onDelete,
     onEdit
 }) {
+    const { isPrivacyMode } = useAppContext();
     const progress = targetAmount > 0 ? (currentAmount / targetAmount) * 100 : 0;
 
     const getCategoryIcon = (cat) => {
@@ -28,7 +30,7 @@ export default function GoalCard({
             case 'rumah': return <Home className="w-4 h-4 text-blue-500" />;
             case 'pendidikan': return <GraduationCap className="w-4 h-4 text-indigo-500" />;
             case 'darurat': return <AlertCircle className="w-4 h-4 text-amber-500" />;
-            default: return <Coins className="w-4 h-4 text-emerald-500" />;
+            default: return <Tags className="w-4 h-4 text-slate-400" />;
         }
     };
 
@@ -43,6 +45,7 @@ export default function GoalCard({
     };
 
     const formatCur = (num) => {
+        if (isPrivacyMode) return 'Rp •••••••';
         return 'Rp ' + num.toLocaleString('id-ID');
     };
 

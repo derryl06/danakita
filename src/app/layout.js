@@ -6,6 +6,7 @@ import { QuickAddProvider } from '../context/QuickAddContext';
 import AuthWrapper from '../components/AuthWrapper';
 import Script from 'next/script';
 import NotificationHandler from '../components/NotificationHandler';
+import PWAPrompt from '../components/PWAPrompt';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
               <NotificationHandler />
               <div className="w-full max-w-md bg-white min-h-screen shadow-sm relative overflow-x-hidden flex flex-col h-full pb-16">
                 {children}
+                <PWAPrompt />
                 <BottomNav />
               </div>
             </AuthWrapper>

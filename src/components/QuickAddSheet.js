@@ -6,6 +6,7 @@ import { useAppContext } from '../context/AppContext';
 import { X } from 'lucide-react';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
+import confetti from 'canvas-confetti';
 
 export default function QuickAddSheet() {
     const { isOpen, setIsOpen } = useQuickAdd();
@@ -49,6 +50,21 @@ export default function QuickAddSheet() {
         try {
             schema.parse({ amount: parsedAmount, targetId, note });
             setErrors({});
+
+            const target = targets.find(t => t.id === targetId);
+
+            // Check if this transaction completes the goal
+            if (type === 'in' && target && target.target_amount > 0) {
+                if (target.current_amount < target.target_amount && (target.current_amount + parsedAmount) >= target.target_amount) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'],
+                        zIndex: 9999
+                    });
+                }
+            }
 
             addTransaction({
                 id: Date.now().toString(),

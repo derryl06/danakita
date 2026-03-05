@@ -1,7 +1,8 @@
 'use client';
 
 import TopBar from '../../components/TopBar';
-import { User, LogIn, UserPlus, Settings, HelpCircle, ChevronRight, LogOut } from 'lucide-react';
+import { User, LogIn, UserPlus, Settings, HelpCircle, ChevronRight, LogOut, Link2, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAppContext } from '../../context/AppContext';
 import { auth } from '../../utils/firebase';
@@ -9,12 +10,34 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
 export default function ProfilPage() {
-    const { user, profile } = useAppContext();
+    const { user, profile, joinHousehold } = useAppContext();
     const router = useRouter();
+    const [joinId, setJoinId] = useState('');
+    const [status, setStatus] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const handleLogout = async () => {
         await signOut(auth);
         router.push('/');
+    };
+
+    const handleJoin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        const res = await joinHousehold(joinId);
+        setLoading(false);
+        if (res.success) {
+            setStatus({ type: 'success', message: 'Berhasil bergabung!' });
+            setJoinId('');
+        } else {
+            setStatus({ type: 'error', message: res.message || 'Gagal bergabung' });
+        }
+        setTimeout(() => setStatus(null), 3000);
+    };
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text);
+        alert('ID disalin!');
     };
 
     return (
@@ -57,6 +80,52 @@ export default function ProfilPage() {
                         )}
                     </div>
                 </div>
+
+                {user && profile && (
+                    <div className="w-full mt-6 bg-white rounded-[24px] p-6 border border-slate-200 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none group-hover:bg-blue-100/50 transition-colors"></div>
+
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2 relative z-10">
+                            <Link2 className="w-4 h-4 text-blue-500" /> Partner Sync (Household)
+                        </h3>
+
+                        <div className="bg-slate-50/80 backdrop-blur-sm rounded-2xl p-4 mb-5 border border-slate-100 relative z-10">
+                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 opacity-70">ID Household Kamu (Bagikan ke Pasangan)</span>
+                            <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200/50 shadow-sm">
+                                <code className="text-xs font-black text-blue-600 truncate mr-2 select-all px-1">{profile.household_id}</code>
+                                <button onClick={() => copyToClipboard(profile.household_id)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all active:scale-95 group/copy">
+                                    <Copy className="w-3.5 h-3.5 group-hover/copy:scale-110" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleJoin} className="flex flex-col gap-3 relative z-10">
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1 opacity-70">Gabung ke ID Pasangan</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={joinId}
+                                    onChange={e => setJoinId(e.target.value)}
+                                    placeholder="Masukkan ID Pasangan..."
+                                    className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-blue-500 font-bold text-slate-700 shadow-sm placeholder:text-slate-300 transition-all"
+                                />
+                                <button
+                                    disabled={loading || !joinId}
+                                    className="bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-black active:scale-95 transition-all disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-800 shadow-md"
+                                >
+                                    {loading ? '...' : 'GABUNG'}
+                                </button>
+                            </div>
+
+                            {status && (
+                                <div className={`flex items-center gap-2 text-[10px] font-bold mt-1 px-4 py-2.5 rounded-xl animate-in fade-in slide-in-from-top-1 ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                                    {status.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                                    {status.message}
+                                </div>
+                            )}
+                        </form>
+                    </div>
+                )}
 
                 <div className="w-full bg-white rounded-[24px] border border-[var(--color-border)] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.06)] transition-shadow duration-500 mt-6 overflow-hidden">
                     <MemoizedMenuLink href="/pengaturan" icon={<Settings className="w-5 h-5 text-slate-500" />} title="Pengaturan Aplikasi" />

@@ -4,13 +4,14 @@
 
 ## ✨ Fitur Utama
 
-- **🎯 Manajemen Target**: Buat target tabungan spesifik (misal: Menikah, Rumah, Dana Darurat) lengkap dengan nominal, kategori, dan tenggat waktu.
-- **💸 Pencatatan Transaksi**: Catat uang masuk (menabung) dan keluar (penarikan) dengan riwayat yang rapi.
-- **🤝 Partner Sharing (Household)**: Hubungkan profil dengan pasangan untuk memantau progress tabungan secara real-time di satu dashboard yang sama.
-- **⏳ Simulasi Tercapai**: Kalkulator otomatis untuk menghitung berapa bulan lagi target Anda tercapai berdasarkan kemampuan menabung per bulan.
-- **📊 Export Data**: Unduh laporan transaksi dalam format Excel atau PDF untuk pencatatan offline.
-- **🔔 Notifikasi Pengingat**: Pengingat harian agar Anda tidak lupa menyisihkan tabungan.
-- **🌐 Offline & Sync**: Data tersimpan secara lokal saat belum login dan otomatis sinkron ke cloud setelah login dengan Firebase.
+- **🎯 Manajemen Target & Kategori**: Buat target tabungan spesifik lengkap dengan nominal, tenggat waktu, dan kategori khusus (kustom) yang bisa ditambahkan sendiri.
+- **🤝 Sinkronisasi Pasangan (Household ID)**: Hubungkan profil dengan pasangan untuk memantau *progress* tabungan secara *real-time* di satu dashboard dengan ID Household yang sama. Lengkap dengan pencatatan "Siapa yang menabung".
+- **💸 Pencatatan Transaksi & Gamifikasi**: Catat uang masuk dan keluar dengan efek selebrasi (*confetti*) saat target tercapai.
+- **🕵️ Mode Privasi (Incognito)**: Sembunyikan nominal saldo dan target hanya dengan satu klik saat membuka aplikasi di tempat umum.
+- **📈 Laporan & Analitik Visual**: Pantau sebaran aset melalui *Donut Chart* dan tren tabungan 6 bulan terakhir dengan *Double Bar Chart* interaktif.
+- **⏳ Simulasi Tercapai**: Kalkulator otomatis untuk menghitung berapa bulan lagi target Anda tercapai berdasarkan kemampuan menabung Anda.
+- **📊 Ekspor Data & Arsip**: Unduh laporan transaksi dalam format Excel atau PDF untuk pelaporan *offline*.
+- **🌐 Offline-First & Cloud Sync**: Data tersimpan secara lokal (*Local Storage*) saat mode *Guest* dan otomatis sinkron silang perangkat via Firebase untuk pengguna *Login*.
 
 ## 🚀 Tech Stack
 
@@ -18,7 +19,7 @@
 - **Database & Auth**: [Firebase](https://firebase.google.com/) (Firestore & Auth)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
-- **Utility**: `date-fns`, `zod`, `exceljs`, `jspdf`
+- **Utility**: `date-fns`, `zod`, `exceljs`, `jspdf`, `canvas-confetti`
 
 ## 📦 Instalasi
 

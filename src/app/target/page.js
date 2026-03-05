@@ -21,7 +21,7 @@ const targetSchema = z.object({
 });
 
 export default function TargetPage() {
-    const { targets, addTarget, deleteTarget, updateTarget } = useAppContext();
+    const { targets, addTarget, deleteTarget, updateTarget, categories, addCategory, removeCategory } = useAppContext();
     const [isAdding, setIsAdding] = useState(false);
     const [editingTargetId, setEditingTargetId] = useState(null);
 
@@ -41,6 +41,8 @@ export default function TargetPage() {
     const [importLink, setImportLink] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [showImporter, setShowImporter] = useState(false);
+    const [isAddingCategory, setIsAddingCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
 
     const toggleCategory = (cat) => {
         setExpandedCategories(prev => ({
@@ -99,6 +101,15 @@ export default function TargetPage() {
         setShowImporter(false);
         setImportLink('');
         setIsAdding(true);
+    };
+
+    const handleAddCategory = () => {
+        if (newCategoryName.trim()) {
+            addCategory(newCategoryName.trim());
+            setFormData({ ...formData, category: newCategoryName.trim() });
+            setNewCategoryName('');
+            setIsAddingCategory(false);
+        }
     };
 
     const handleSubmit = (e) => {
@@ -194,12 +205,36 @@ export default function TargetPage() {
                                     className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] bg-white"
                                 >
                                     <option value="">Pilih Kategori</option>
-                                    <option value="General">Umum</option>
-                                    <option value="Menikah">Menikah</option>
-                                    <option value="Pendidikan">Pendidikan</option>
-                                    <option value="Rumah">Isi Rumah</option>
-                                    <option value="Darurat">Dana Darurat</option>
+                                    {categories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
                                 </select>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddingCategory(!isAddingCategory)}
+                                    className="mt-2 text-[10px] font-bold text-blue-600 flex items-center gap-1 hover:underline"
+                                >
+                                    <Plus className="w-3 h-3" /> {isAddingCategory ? 'Batal' : 'Tambah Kategori Baru'}
+                                </button>
+
+                                {isAddingCategory && (
+                                    <div className="mt-2 flex gap-2 animate-in fade-in slide-in-from-top-1">
+                                        <input
+                                            type="text"
+                                            value={newCategoryName}
+                                            onChange={e => setNewCategoryName(e.target.value)}
+                                            className="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500"
+                                            placeholder="Nama kategori baru..."
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCategory}
+                                            className="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-bold"
+                                        >
+                                            Simpan
+                                        </button>
+                                    </div>
+                                )}
                                 {errors.category && <p className="text-red-500 text-xs mt-1 ml-1">{errors.category}</p>}
                             </div>
 
@@ -316,17 +351,21 @@ export default function TargetPage() {
                         <div className="flex gap-4 mb-6">
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="flex-1 bg-slate-50/50 border-2 border-dashed border-slate-200 text-slate-500 py-5 rounded-[24px] font-semibold flex flex-col items-center justify-center gap-2 hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 hover:-translate-y-0.5 transition-all duration-300 group"
+                                className="flex-1 bg-white border-2 border-slate-100 text-slate-600 py-6 rounded-[28px] font-bold flex flex-col items-center justify-center gap-3 shadow-sm hover:border-blue-500 hover:text-blue-600 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
                             >
-                                <Plus className="w-5 h-5 text-slate-400 group-hover:text-blue-500" />
-                                <span className="text-[11px] uppercase tracking-wider">Target Manual</span>
+                                <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-blue-50 transition-colors">
+                                    <Plus className="w-6 h-6 text-slate-400 group-hover:text-blue-500" />
+                                </div>
+                                <span className="text-[11px] uppercase tracking-widest">Buat Target</span>
                             </button>
                             <button
                                 onClick={() => setShowImporter(true)}
-                                className="flex-1 bg-blue-50/30 border-2 border-dashed border-blue-200 text-blue-500 py-5 rounded-[24px] font-semibold flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-400 hover:-translate-y-0.5 transition-all duration-300 group"
+                                className="flex-1 bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-blue-100/50 text-indigo-600 py-6 rounded-[28px] font-bold flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
                             >
-                                <Sparkles className="w-5 h-5 text-blue-400 group-hover:text-blue-600" />
-                                <span className="text-[11px] uppercase tracking-wider">Impor Wishlist</span>
+                                <div className="p-3 bg-white rounded-2xl shadow-sm text-indigo-500 group-hover:scale-110 transition-transform">
+                                    <Sparkles className="w-6 h-6" />
+                                </div>
+                                <span className="text-[11px] uppercase tracking-widest">Impor Wishlist</span>
                             </button>
                         </div>
 
@@ -398,24 +437,25 @@ export default function TargetPage() {
                                         </button>
 
                                         {expandedCategories[category] && (
-                                            <div className="p-4 flex flex-col gap-4 border-t border-slate-100 bg-slate-50/20">
+                                            <div className="p-4 flex flex-col gap-4 border-t border-slate-100 bg-slate-50/50">
                                                 {groupedTargets[category].map(target => (
-                                                    <GoalCard
-                                                        key={target.id}
-                                                        id={target.id}
-                                                        name={target.name}
-                                                        category={target.category}
-                                                        currentAmount={target.current_amount}
-                                                        targetAmount={target.target_amount}
-                                                        deadline={target.deadline}
-                                                        isInflationAdjusted={target.is_inflation_adjusted}
-                                                        originalTargetAmount={target.original_target_amount}
-                                                        storageLocation={target.storage_location}
-                                                        status={target.current_amount >= target.target_amount ? 'Tercapai 🎉' : 'On track'}
-                                                        statusType={target.current_amount >= target.target_amount ? 'success' : 'success'}
-                                                        onDelete={deleteTarget}
-                                                        onEdit={handleEdit}
-                                                    />
+                                                    <div key={target.id} className="transform transition-transform duration-300 hover:scale-[1.02]">
+                                                        <GoalCard
+                                                            id={target.id}
+                                                            name={target.name}
+                                                            category={target.category}
+                                                            currentAmount={target.current_amount}
+                                                            targetAmount={target.target_amount}
+                                                            deadline={target.deadline}
+                                                            isInflationAdjusted={target.is_inflation_adjusted}
+                                                            originalTargetAmount={target.original_target_amount}
+                                                            storageLocation={target.storage_location}
+                                                            status={target.current_amount >= target.target_amount ? 'Tercapai 🎉' : 'On track'}
+                                                            statusType={target.current_amount >= target.target_amount ? 'success' : 'success'}
+                                                            onDelete={deleteTarget}
+                                                            onEdit={handleEdit}
+                                                        />
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}

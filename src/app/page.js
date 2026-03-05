@@ -5,12 +5,12 @@ import { useQuickAdd } from '../context/QuickAddContext';
 import TopBar from '../components/TopBar';
 import GoalCard from '../components/GoalCard';
 import { differenceInMonths, parseISO, isValid } from 'date-fns';
-import { ArrowRight, Sparkles, Calendar } from 'lucide-react';
+import { ArrowRight, Sparkles, Calendar, Eye, EyeOff } from 'lucide-react';
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Beranda() {
-  const { targets, isDemoMode, loadDemoData, clearData, deleteTarget } = useAppContext();
+  const { targets, isDemoMode, loadDemoData, clearData, deleteTarget, isPrivacyMode, togglePrivacyMode } = useAppContext();
   const { setIsOpen } = useQuickAdd();
   const router = useRouter();
 
@@ -64,6 +64,13 @@ export default function Beranda() {
         subtitle="Mulai persiapkan masa depanmu"
         rightComponent={
           <div className="flex items-center gap-2">
+            <button
+              onClick={togglePrivacyMode}
+              className="p-2.5 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-all active:scale-95 shadow-sm"
+              title={isPrivacyMode ? 'Tampilkan Saldo' : 'Sembunyikan Saldo'}
+            >
+              {isPrivacyMode ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
             <button
               onClick={() => router.push('/transaksi')}
               className="p-2.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-all active:scale-95 shadow-sm"
@@ -145,7 +152,7 @@ export default function Beranda() {
                     <div className="flex flex-col">
                       <span className="font-bold text-slate-400 text-[10px] uppercase tracking-widest">{targetUtama.name}</span>
                       <h1 className="text-3xl font-black text-[var(--color-text-primary)] tracking-tight mt-1">
-                        Rp {targetUtama.current_amount?.toLocaleString('id-ID') || '0'}
+                        {isPrivacyMode ? 'Rp •••••••' : `Rp ${targetUtama.current_amount?.toLocaleString('id-ID') || '0'}`}
                       </h1>
                     </div>
                     <span className={`text-[10px] px-3 py-1 rounded-full font-black tracking-wider uppercase ${type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
@@ -155,7 +162,7 @@ export default function Beranda() {
 
                   <div className="flex items-center gap-2 mb-5">
                     <span className="text-xs font-bold text-slate-400">
-                      Target: Rp {targetUtama.target_amount?.toLocaleString('id-ID') || '0'}
+                      Target: {isPrivacyMode ? 'Rp •••••••' : `Rp ${targetUtama.target_amount?.toLocaleString('id-ID') || '0'}`}
                     </span>
                   </div>
 
@@ -176,7 +183,7 @@ export default function Beranda() {
                     {perMonth > 0 && (
                       <div className="bg-blue-50/50 backdrop-blur-md p-3 rounded-2xl border border-blue-100/50 shadow-sm">
                         <span className="block text-[9px] font-bold text-blue-400 uppercase mb-0.5">Nabung / bln</span>
-                        <span className="text-xs font-black text-blue-700">Rp {Math.round(perMonth).toLocaleString('id-ID')}</span>
+                        <span className="text-xs font-black text-blue-700">{isPrivacyMode ? 'Rp •••••••' : `Rp ${Math.round(perMonth).toLocaleString('id-ID')}`}</span>
                       </div>
                     )}
                   </div>
