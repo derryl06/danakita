@@ -54,7 +54,7 @@ export default function PWAPrompt() {
     if (!showPrompt) return null;
 
     return (
-        <div className="fixed bottom-24 left-0 w-full px-4 z-50 animate-in slide-in-from-bottom-8 fade-in duration-500 flex justify-center pointer-events-none">
+        <div className="fixed bottom-36 left-0 w-full px-4 z-[60] animate-in slide-in-from-bottom-8 fade-in duration-500 flex justify-center pointer-events-none">
             <div className="bg-slate-900 w-full max-w-sm rounded-[24px] p-4 shadow-2xl flex items-center justify-between gap-4 pointer-events-auto border border-slate-700/50 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
 
