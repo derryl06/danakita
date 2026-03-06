@@ -5,8 +5,9 @@ import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
 import GoalCard from '../../components/GoalCard';
 import { z } from 'zod';
-import { Plus, X, ChevronDown, ChevronRight, Tags, Info, Sparkles, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Plus, X, ChevronDown, ChevronRight, Tags, Info, Sparkles, Link as LinkIcon, Loader2, ShoppingBag } from 'lucide-react';
 import { calculateInflationAdjusted } from '../../utils/finance';
+import { extractShopeeData } from '../../utils/shopee';
 
 const targetSchema = z.object({
     name: z.string().min(1, 'Nama target wajib diisi'),
@@ -81,26 +82,46 @@ export default function TargetPage() {
         if (!importLink) return;
 
         setIsImporting(true);
-        // Simulate "Analyzing"
-        await new Promise(r => setTimeout(r, 1500));
 
-        let name = "Produk Impian";
-        let amount = "5000000";
+        try {
+            // Jika ini link Shopee, gunakan parser pintar
+            if (importLink.includes('shopee.co.id') || importLink.includes('shp.ee')) {
+                const data = await extractShopeeData(importLink);
 
-        if (importLink.includes('shopee.co.id')) name = "Gadget Unggulan Shopee";
-        else if (importLink.includes('tokopedia.com')) name = "Barang Idaman Tokopedia";
+                // Tambahkan delay sedikit untuk feel "AI analyzing"
+                await new Promise(r => setTimeout(r, 1200));
 
-        setFormData({
-            ...formData,
-            name: name,
-            target_amount: amount,
-            category: 'General'
-        });
+                setFormData({
+                    ...formData,
+                    name: data.name,
+                    target_amount: data.price.toString(),
+                    category: data.category || 'Belanja'
+                });
+            } else if (importLink.includes('tokopedia.com')) {
+                await new Promise(r => setTimeout(r, 1000));
+                setFormData({
+                    ...formData,
+                    name: "Barang Idaman Tokopedia",
+                    target_amount: "5000000",
+                    category: 'General'
+                });
+            } else {
+                setFormData({
+                    ...formData,
+                    name: "Produk Impian",
+                    target_amount: "1000000",
+                    category: 'General'
+                });
+            }
 
-        setIsImporting(false);
-        setShowImporter(false);
-        setImportLink('');
-        setIsAdding(true);
+            setIsImporting(false);
+            setShowImporter(false);
+            setImportLink('');
+            setIsAdding(true);
+        } catch (error) {
+            console.error("Import failed:", error);
+            setIsImporting(false);
+        }
     };
 
     const handleAddCategory = () => {
@@ -374,7 +395,7 @@ export default function TargetPage() {
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
                                 <div className="flex justify-between items-center mb-4 relative z-10">
                                     <h3 className="font-bold flex items-center gap-2">
-                                        <LinkIcon className="w-4 h-4" /> Impor dari Link
+                                        <ShoppingBag className="w-5 h-5 text-orange-200" /> Impor dari Shopee
                                     </h3>
                                     <button onClick={() => setShowImporter(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
                                         <X className="w-4 h-4" />
