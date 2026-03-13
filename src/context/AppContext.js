@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth, db } from '../utils/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
@@ -28,16 +28,62 @@ export function AppProvider({ children }) {
     const [isDemoMode, setIsDemoMode] = useState(false);
     const [partner, setPartner] = useState(null);
     const [categories, setCategories] = useState(['General', 'Menikah', 'Pendidikan', 'Rumah', 'Darurat']);
-    const [isPrivacyMode, setIsPrivacyMode] = useState(() => {
+    const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [monthlyBudget, setMonthlyBudget] = useState(0);
+    const [hasSeenOnboarding, setHasSeenOnboarding] = useState(true); // Default true to prevent flash
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Hydrate from localStorage after mount (prevents hydration mismatch)
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const privacy = localStorage.getItem('dk_privacy_mode') === 'true';
+        setIsPrivacyMode(privacy);
+
+        const savedDark = localStorage.getItem('dk_dark_mode');
+        const dark = savedDark !== null ? savedDark === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setIsDarkMode(dark);
+
+        const budget = Number(localStorage.getItem('dk_monthly_budget')) || 0;
+        setMonthlyBudget(budget);
+
+        const onboarding = localStorage.getItem('dk_onboarding_seen') === 'true';
+        setHasSeenOnboarding(onboarding);
+    }, []);
+
+    // Dark mode toggle
+    useEffect(() => {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('dk_privacy_mode') === 'true';
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            localStorage.setItem('dk_dark_mode', isDarkMode.toString());
         }
-        return false;
-    });
+    }, [isDarkMode]);
+
+    const toggleDarkMode = useCallback(() => {
+        setIsDarkMode(prev => !prev);
+    }, []);
+
+    const completeOnboarding = useCallback(() => {
+        setHasSeenOnboarding(true);
+        localStorage.setItem('dk_onboarding_seen', 'true');
+    }, []);
+
+    const updateMonthlyBudget = useCallback((amount) => {
+        setMonthlyBudget(amount);
+        localStorage.setItem('dk_monthly_budget', amount.toString());
+    }, []);
 
     // Monitor Auth Status
     useEffect(() => {
-        if (!auth) return;
+        if (!auth) {
+            setIsLoading(false);
+            return;
+        }
 
         let unsubscribeTargets = null;
         let unsubscribeTx = null;
@@ -63,7 +109,6 @@ export function AppProvider({ children }) {
 
                 let currentProfile;
                 if (!profileSnap.exists()) {
-                    // Create new profile with a random household_id
                     const newHouseholdId = doc(collection(db, 'households')).id;
                     currentProfile = {
                         id: fbUser.uid,
@@ -93,7 +138,6 @@ export function AppProvider({ children }) {
                 );
                 unsubscribeTx = onSnapshot(qTx, (snapshot) => {
                     const txArr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
                     txArr.sort((a, b) => {
                         const aDate = a?.created_at?.toDate?.() ?? new Date(a?.date || a?.created_at || 0);
                         const bDate = b?.created_at?.toDate?.() ?? new Date(b?.date || b?.created_at || 0);
@@ -130,6 +174,7 @@ export function AppProvider({ children }) {
 
                 setProfile(null);
             }
+            setIsLoading(false);
         });
 
         return () => {
@@ -154,6 +199,11 @@ export function AppProvider({ children }) {
             { id: '2', name: 'Isi Rumah', category: 'Rumah', target_amount: 30000000, current_amount: 3000000, deadline: null },
             { id: '3', name: 'Dana Darurat', category: 'Darurat', target_amount: 15000000, current_amount: 2000000, deadline: null },
         ]);
+        setTransactions([
+            { id: 'demo1', targetId: '1', amount: 5000000, type: 'in', note: 'Gaji bulan ini', date: new Date().toISOString(), user_name: 'Saya' },
+            { id: 'demo2', targetId: '1', amount: 2000000, type: 'in', note: 'Bonus projek', date: new Date(Date.now() - 86400000).toISOString(), user_name: 'Saya' },
+            { id: 'demo3', targetId: '2', amount: 1500000, type: 'in', note: 'THR', date: new Date(Date.now() - 172800000).toISOString(), user_name: 'Saya' },
+        ]);
         setIsDemoMode(true);
     };
 
@@ -170,12 +220,11 @@ export function AppProvider({ children }) {
                 ...transaction,
                 household_id: profile.household_id,
                 created_by: user.uid,
-                user_name: profile.username || user.email.split('@')[0], // For sharing context
-                date: new Date().toISOString() // Or serverTimestamp but ISO is easier for existing UI
+                user_name: profile.username || user.email.split('@')[0],
+                date: new Date().toISOString()
             };
             await addDoc(collection(db, 'transactions'), txData);
 
-            // Update current_amount in target doc
             const targetRef = doc(db, 'targets', transaction.targetId);
             const targetSnap = await getDoc(targetRef);
             if (targetSnap.exists()) {
@@ -192,6 +241,32 @@ export function AppProvider({ children }) {
                         ...t,
                         current_amount: t.current_amount + (transaction.type === 'in' ? transaction.amount : -transaction.amount)
                     };
+                }
+                return t;
+            }));
+        }
+    };
+
+    const deleteTransaction = async (transactionId) => {
+        const tx = transactions.find(t => t.id === transactionId);
+        if (!tx) return;
+
+        if (user && db) {
+            // Reverse the amount change from the target
+            const targetRef = doc(db, 'targets', tx.targetId);
+            const targetSnap = await getDoc(targetRef);
+            if (targetSnap.exists()) {
+                const currentAmt = targetSnap.data().current_amount || 0;
+                const reverseAmount = tx.type === 'in' ? currentAmt - tx.amount : currentAmt + tx.amount;
+                await updateDoc(targetRef, { current_amount: Math.max(0, reverseAmount) });
+            }
+            await deleteDoc(doc(db, 'transactions', transactionId));
+        } else {
+            setTransactions(prev => prev.filter(t => t.id !== transactionId));
+            setTargets(prev => prev.map(t => {
+                if (t.id === tx.targetId) {
+                    const reverseAmount = tx.type === 'in' ? t.current_amount - tx.amount : t.current_amount + tx.amount;
+                    return { ...t, current_amount: Math.max(0, reverseAmount) };
                 }
                 return t;
             }));
@@ -248,8 +323,7 @@ export function AppProvider({ children }) {
             const tx = transactions.find(t => t.id === transactionId);
             if (!tx) return;
 
-            const currentReactions = tx.reactions || {};
-            // Toggle reaction: if same reaction exists, remove it. Else set it.
+            const currentReactions = { ...(tx.reactions || {}) };
             if (currentReactions[user.uid] === reaction) {
                 delete currentReactions[user.uid];
             } else {
@@ -284,12 +358,9 @@ export function AppProvider({ children }) {
         if (!targetHouseholdId || targetHouseholdId.length < 5) return { success: false, message: 'ID tidak valid' };
 
         try {
-            // Update user profile to use new household_id
             await updateDoc(doc(db, 'profiles', user.uid), {
                 household_id: targetHouseholdId
             });
-            // Profile state will be updated by onSnapshot if we have one, 
-            // but for now let's just refresh current profile state manually or let them reload
             setProfile(prev => ({ ...prev, household_id: targetHouseholdId }));
             return { success: true };
         } catch (error) {
@@ -326,9 +397,11 @@ export function AppProvider({ children }) {
             categories,
             isDemoMode,
             partner,
+            isLoading,
             loadDemoData,
             clearData,
             addTransaction,
+            deleteTransaction,
             addTarget,
             deleteTarget,
             updateTarget,
@@ -338,7 +411,13 @@ export function AppProvider({ children }) {
             removeCategory,
             isPrivacyMode,
             togglePrivacyMode,
-            joinHousehold
+            joinHousehold,
+            isDarkMode,
+            toggleDarkMode,
+            monthlyBudget,
+            updateMonthlyBudget,
+            hasSeenOnboarding,
+            completeOnboarding,
         }}>
             {children}
         </AppContext.Provider>

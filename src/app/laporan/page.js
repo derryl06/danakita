@@ -2,11 +2,13 @@
 
 import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
+import { GoldPriceWidget, SimulationWidget } from '../../components/FinanceWidgets';
 import { FileText, Download, Share2, TrendingUp, PieChart, History, ChevronLeft, FileSpreadsheet, Building2, Gem, Wallet, LineChart } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
 import { useRouter } from 'next/navigation';
 import { format, subMonths, isSameMonth, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { useMemo } from 'react';
 
 export default function LaporanPage() {
     const { targets, transactions, isPrivacyMode } = useAppContext();
@@ -20,54 +22,85 @@ export default function LaporanPage() {
         router.back();
     };
 
-    const assetData = [
-        { name: 'Bank', icon: <Building2 className="w-4 h-4" />, colorHex: '#4f46e5' },   // indigo-600
-        { name: 'Emas', icon: <Gem className="w-4 h-4" />, colorHex: '#d97706' },        // amber-600
-        { name: 'Tunai', icon: <Wallet className="w-4 h-4" />, colorHex: '#059669' },    // emerald-600
-        { name: 'Reksadana', icon: <LineChart className="w-4 h-4" />, colorHex: '#0284c7' }, // sky-600
-    ].map(loc => {
-        const amount = targets
-            .filter(t => (t.storage_location || 'Bank') === loc.name)
-            .reduce((acc, t) => acc + (Number(t.current_amount) || 0), 0);
-        return { ...loc, amount, percentage: totalCurrent > 0 ? (amount / totalCurrent) * 100 : 0 };
-    });
+    // Real growth calculation
+    const monthlyGrowth = useMemo(() => {
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+        const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+        const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
 
-    let currentDeg = 0;
-    const gradientStops = assetData.map(d => {
-        if (d.percentage === 0) return '';
-        const start = currentDeg;
-        currentDeg += (d.percentage / 100) * 360;
-        return `${d.colorHex} ${start}deg ${currentDeg}deg`;
-    }).filter(g => g).join(', ');
+        const thisMonthIn = (transactions || []).filter(tx => {
+            if (!tx.date || tx.type !== 'in') return false;
+            const d = new Date(tx.date);
+            return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+        }).reduce((a, t) => a + (Number(t.amount) || 0), 0);
 
-    const conicGradientString = gradientStops ? `conic-gradient(${gradientStops})` : 'conic-gradient(#f1f5f9 0deg 360deg)';
+        const lastMonthIn = (transactions || []).filter(tx => {
+            if (!tx.date || tx.type !== 'in') return false;
+            const d = new Date(tx.date);
+            return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+        }).reduce((a, t) => a + (Number(t.amount) || 0), 0);
 
-    const last6Months = Array.from({ length: 6 }).map((_, i) => {
-        const d = subMonths(new Date(), 5 - i);
-        return {
-            date: d,
-            label: format(d, 'MMM', { locale: id }), // Jan, Feb, dst
-            in: 0,
-            out: 0
-        };
-    });
+        if (lastMonthIn === 0 && thisMonthIn === 0) return null;
+        if (lastMonthIn === 0) return { percentage: 100, isPositive: true };
+        const pct = ((thisMonthIn - lastMonthIn) / lastMonthIn * 100).toFixed(0);
+        return { percentage: Math.abs(pct), isPositive: Number(pct) >= 0 };
+    }, [transactions]);
 
-    transactions?.forEach(trx => {
-        if (!trx.date) return;
-        const trxDate = typeof trx.date === 'string' ? parseISO(trx.date) : new Date(trx.date);
+    const assetData = useMemo(() => {
+        return [
+            { name: 'Bank', icon: <Building2 className="w-4 h-4" />, colorHex: '#4f46e5' },
+            { name: 'Emas', icon: <Gem className="w-4 h-4" />, colorHex: '#d97706' },
+            { name: 'Tunai', icon: <Wallet className="w-4 h-4" />, colorHex: '#059669' },
+            { name: 'Reksadana', icon: <LineChart className="w-4 h-4" />, colorHex: '#0284c7' },
+        ].map(loc => {
+            const amount = targets
+                .filter(t => (t.storage_location || 'Bank') === loc.name)
+                .reduce((acc, t) => acc + (Number(t.current_amount) || 0), 0);
+            return { ...loc, amount, percentage: totalCurrent > 0 ? (amount / totalCurrent) * 100 : 0 };
+        });
+    }, [targets, totalCurrent]);
 
-        const monthMatch = last6Months.find(m => isSameMonth(m.date, trxDate));
-        if (monthMatch) {
-            if (trx.type === 'in') monthMatch.in += Number(trx.amount) || 0;
-            if (trx.type === 'out') monthMatch.out += Number(trx.amount) || 0;
-        }
-    });
+    const conicGradientString = useMemo(() => {
+        let currentDeg = 0;
+        const gradientStops = assetData.map(d => {
+            if (d.percentage === 0) return '';
+            const start = currentDeg;
+            currentDeg += (d.percentage / 100) * 360;
+            return `${d.colorHex} ${start}deg ${currentDeg}deg`;
+        }).filter(g => g).join(', ');
+        return gradientStops ? `conic-gradient(${gradientStops})` : 'conic-gradient(#f1f5f9 0deg 360deg)';
+    }, [assetData]);
+
+    const last6Months = useMemo(() => {
+        const months = Array.from({ length: 6 }).map((_, i) => {
+            const d = subMonths(new Date(), 5 - i);
+            return {
+                date: d,
+                label: format(d, 'MMM', { locale: id }),
+                in: 0,
+                out: 0
+            };
+        });
+
+        transactions?.forEach(trx => {
+            if (!trx.date) return;
+            const trxDate = typeof trx.date === 'string' ? parseISO(trx.date) : new Date(trx.date);
+            const monthMatch = months.find(m => isSameMonth(m.date, trxDate));
+            if (monthMatch) {
+                if (trx.type === 'in') monthMatch.in += Number(trx.amount) || 0;
+                if (trx.type === 'out') monthMatch.out += Number(trx.amount) || 0;
+            }
+        });
+
+        return months;
+    }, [transactions]);
 
     const maxChartValue = Math.max(...last6Months.map(m => Math.max(m.in, m.out)), 1000);
 
-
     return (
-        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)] overflow-x-hidden">
+        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)] overflow-x-hidden page-transition">
             <TopBar
                 title="Laporan & Ekspor"
                 rightComponent={
@@ -89,6 +122,12 @@ export default function LaporanPage() {
                                 <TrendingUp className="w-4 h-4" />
                             </div>
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Status Keuangan</span>
+                            {monthlyGrowth && (
+                                <span className={`ml-auto text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${monthlyGrowth.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                    <TrendingUp className="w-3 h-3" />
+                                    {monthlyGrowth.isPositive ? '+' : '-'}{monthlyGrowth.percentage}% bulan ini
+                                </span>
+                            )}
                         </div>
 
                         <h2 className="text-3xl font-black text-slate-800 mb-1">
@@ -165,16 +204,14 @@ export default function LaporanPage() {
                                 return (
                                     <div key={i} className="flex flex-col items-center flex-1 gap-2.5 group/bar z-10">
                                         <div className="w-full flex justify-center gap-1 h-32 items-end relative">
-                                            {/* Bar Masuk */}
                                             <div
                                                 className="w-full max-w-[12px] bg-indigo-500 rounded-t-md relative transition-all duration-700 ease-out group-hover/bar:bg-indigo-600 shadow-sm"
-                                                style={{ height: `${Math.max(heightIn, 3)}%` }} // min height for visibility
+                                                style={{ height: `${Math.max(heightIn, 3)}%` }}
                                             >
                                                 <div className="opacity-0 group-hover/bar:opacity-100 absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2.5 py-1.5 rounded-lg flex items-center shadow-lg transition-opacity whitespace-nowrap z-50 pointer-events-none before:content-[''] before:absolute before:-bottom-1 before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-slate-800 font-bold tracking-wider">
                                                     Masuk: {isPrivacyMode ? '•••' : (m.in >= 1000000 ? `${(m.in / 1000000).toFixed(1)}Jt` : `${Math.round(m.in / 1000)}Rb`)}
                                                 </div>
                                             </div>
-                                            {/* Bar Keluar */}
                                             <div
                                                 className="w-full max-w-[12px] bg-rose-300 rounded-t-lg relative transition-all duration-700 ease-out group-hover/bar:bg-rose-400"
                                                 style={{ height: `${Math.max(heightOut, 1)}%` }}
@@ -202,11 +239,10 @@ export default function LaporanPage() {
                     </div>
                 </section>
 
-                {/* Export Options */}
+                {/* Format Ekspor */}
                 <section>
                     <h3 className="text-sm font-bold text-slate-500 mb-4 ml-2 uppercase tracking-wider">Format Ekspor</h3>
                     <div className="grid grid-cols-1 gap-4">
-
                         <button
                             onClick={() => exportToPDF(targets, transactions)}
                             className="flex items-center justify-between p-5 bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group active:scale-95"
@@ -238,7 +274,15 @@ export default function LaporanPage() {
                             </div>
                             <Download className="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors" />
                         </button>
+                    </div>
+                </section>
 
+                {/* Quick Tools Grid - Using shared components */}
+                <section>
+                    <h3 className="text-sm font-bold text-slate-500 mb-4 ml-2 uppercase tracking-wider">Fitur Pendukung</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <GoldPriceWidget />
+                        <SimulationWidget />
                     </div>
                 </section>
 
@@ -259,7 +303,7 @@ export default function LaporanPage() {
 
                 <div className="mt-auto pt-6 flex flex-col items-center gap-2 opacity-30 select-none">
                     <History className="w-8 h-8 text-slate-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Arsip Dana Kita v1.0</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Arsip Dana Kita v1.1</span>
                 </div>
 
             </div>

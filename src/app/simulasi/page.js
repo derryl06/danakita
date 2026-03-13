@@ -24,7 +24,7 @@ export default function SimulasiPage() {
     const estimasiTanggal = addMonths(new Date(), sisaBulan);
 
     return (
-        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-white">
+        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-white page-transition">
             <TopBar title="Kapan Target Tercapai?" subtitle="Hitung estimasi berdasarkan finansialmu" />
 
             <div className="px-5 mt-6 flex flex-col gap-6">

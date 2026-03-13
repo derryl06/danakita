@@ -5,9 +5,8 @@ import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
 import GoalCard from '../../components/GoalCard';
 import { z } from 'zod';
-import { Plus, X, ChevronDown, ChevronRight, Tags, Info, Sparkles, Link as LinkIcon, Loader2, ShoppingBag } from 'lucide-react';
+import { Plus, X, ChevronDown, ChevronRight, Tags, Info, Sparkles, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { calculateInflationAdjusted } from '../../utils/finance';
-import { extractShopeeData } from '../../utils/shopee';
 
 const targetSchema = z.object({
     name: z.string().min(1, 'Nama target wajib diisi'),
@@ -39,9 +38,6 @@ export default function TargetPage() {
 
     const [errors, setErrors] = useState({});
     const [expandedCategories, setExpandedCategories] = useState({});
-    const [importLink, setImportLink] = useState('');
-    const [isImporting, setIsImporting] = useState(false);
-    const [showImporter, setShowImporter] = useState(false);
     const [isAddingCategory, setIsAddingCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -77,52 +73,7 @@ export default function TargetPage() {
         }
     };
 
-    const handleImportLink = async (e) => {
-        e.preventDefault();
-        if (!importLink) return;
 
-        setIsImporting(true);
-
-        try {
-            // Jika ini link Shopee, gunakan parser pintar
-            if (importLink.includes('shopee.co.id') || importLink.includes('shp.ee')) {
-                const data = await extractShopeeData(importLink);
-
-                // Tambahkan delay sedikit untuk feel "AI analyzing"
-                await new Promise(r => setTimeout(r, 1200));
-
-                setFormData({
-                    ...formData,
-                    name: data.name,
-                    target_amount: data.price.toString(),
-                    category: data.category || 'Belanja'
-                });
-            } else if (importLink.includes('tokopedia.com')) {
-                await new Promise(r => setTimeout(r, 1000));
-                setFormData({
-                    ...formData,
-                    name: "Barang Idaman Tokopedia",
-                    target_amount: "5000000",
-                    category: 'General'
-                });
-            } else {
-                setFormData({
-                    ...formData,
-                    name: "Produk Impian",
-                    target_amount: "1000000",
-                    category: 'General'
-                });
-            }
-
-            setIsImporting(false);
-            setShowImporter(false);
-            setImportLink('');
-            setIsAdding(true);
-        } catch (error) {
-            console.error("Import failed:", error);
-            setIsImporting(false);
-        }
-    };
 
     const handleAddCategory = () => {
         if (newCategoryName.trim()) {
@@ -190,7 +141,7 @@ export default function TargetPage() {
     };
 
     return (
-        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)]">
+        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)] page-transition">
             <TopBar title="Target Tabungan" />
 
             <div className="px-5 mt-6 flex-1 flex flex-col">
@@ -372,58 +323,16 @@ export default function TargetPage() {
                         <div className="flex gap-4 mb-6">
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="flex-1 bg-white border-2 border-slate-100 text-slate-600 py-6 rounded-[28px] font-bold flex flex-col items-center justify-center gap-3 shadow-sm hover:border-blue-500 hover:text-blue-600 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                                className="w-full bg-white border-2 border-slate-100 text-slate-600 py-6 rounded-[28px] font-bold flex flex-col items-center justify-center gap-3 shadow-sm hover:border-blue-500 hover:text-blue-600 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
                             >
                                 <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-blue-50 transition-colors">
                                     <Plus className="w-6 h-6 text-slate-400 group-hover:text-blue-500" />
                                 </div>
                                 <span className="text-[11px] uppercase tracking-widest">Buat Target</span>
                             </button>
-                            <button
-                                onClick={() => setShowImporter(true)}
-                                className="flex-1 bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-blue-100/50 text-indigo-600 py-6 rounded-[28px] font-bold flex flex-col items-center justify-center gap-3 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
-                            >
-                                <div className="p-3 bg-white rounded-2xl shadow-sm text-indigo-500 group-hover:scale-110 transition-transform">
-                                    <Sparkles className="w-6 h-6" />
-                                </div>
-                                <span className="text-[11px] uppercase tracking-widest">Impor Wishlist</span>
-                            </button>
                         </div>
 
-                        {showImporter && (
-                            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[28px] p-6 text-white mb-6 shadow-xl shadow-blue-500/20 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                                <div className="flex justify-between items-center mb-4 relative z-10">
-                                    <h3 className="font-bold flex items-center gap-2">
-                                        <ShoppingBag className="w-5 h-5 text-orange-200" /> Impor dari Shopee
-                                    </h3>
-                                    <button onClick={() => setShowImporter(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-blue-100 mb-4 font-medium leading-relaxed">
-                                    Tempel link Shopee / Tokopedia ke bawah ini, Danakita akan otomatis mengambil data harga (Simulasi).
-                                </p>
-                                <form onSubmit={handleImportLink} className="relative z-10">
-                                    <div className="relative">
-                                        <input
-                                            type="url"
-                                            value={importLink}
-                                            onChange={e => setImportLink(e.target.value)}
-                                            placeholder="https://shopee.co.id/produk..."
-                                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs focus:outline-none focus:bg-white text-white focus:text-slate-800 placeholder:text-blue-200/50 mb-3"
-                                            required
-                                        />
-                                    </div>
-                                    <button
-                                        disabled={isImporting}
-                                        className="w-full bg-white text-blue-600 py-3 rounded-xl font-black text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-                                    >
-                                        {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'ANAlISIS DATA SEKARANG ✨'}
-                                    </button>
-                                </form>
-                            </div>
-                        )}
+
 
                         <div className="flex flex-col gap-4">
                             {targets.length === 0 ? (

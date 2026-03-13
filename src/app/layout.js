@@ -3,10 +3,12 @@ import './globals.css';
 import BottomNav from '../components/BottomNav';
 import { AppProvider } from '../context/AppContext';
 import { QuickAddProvider } from '../context/QuickAddContext';
+import { ToastProvider } from '../components/Toast';
 import AuthWrapper from '../components/AuthWrapper';
 import Script from 'next/script';
 import NotificationHandler from '../components/NotificationHandler';
 import PWAPrompt from '../components/PWAPrompt';
+import OnboardingWrapper from '../components/OnboardingWrapper';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -21,9 +23,9 @@ export default function RootLayout({ children }) {
   const basePath = isProd ? '/danakita' : '';
 
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
       <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Dana Kita" />
         <link rel="apple-touch-icon" href={`${basePath}/globe.svg`} />
@@ -31,14 +33,17 @@ export default function RootLayout({ children }) {
       <body className={`${inter.variable} font-[family-name:var(--font-inter)] bg-[var(--color-secondary-background)] text-[var(--color-text-primary)] min-h-screen flex justify-center pb-20 sm:pb-0`}>
         <AppProvider>
           <QuickAddProvider>
-            <AuthWrapper>
-              <NotificationHandler />
-              <div className="w-full max-w-md bg-white min-h-screen shadow-sm relative overflow-x-hidden flex flex-col h-full pb-16">
-                {children}
-                <PWAPrompt />
-                <BottomNav />
-              </div>
-            </AuthWrapper>
+            <ToastProvider>
+              <AuthWrapper>
+                <NotificationHandler />
+                <OnboardingWrapper />
+                <div className="w-full max-w-md bg-white min-h-screen shadow-sm relative overflow-x-hidden flex flex-col h-full pb-16">
+                  {children}
+                  <PWAPrompt />
+                  <BottomNav />
+                </div>
+              </AuthWrapper>
+            </ToastProvider>
           </QuickAddProvider>
         </AppProvider>
         <Script id="register-sw" strategy="afterInteractive">

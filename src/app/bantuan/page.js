@@ -12,13 +12,16 @@ export default function BantuanPage() {
     };
 
     const faqs = [
-        { q: "Bagaimana cara mencatat tabungan?", a: "Pilih menu Tambah di bagian bawah aplikasi, lalu pilih target tabungan dan masukkan nominalnya." },
+        { q: "Bagaimana cara mencatat tabungan?", a: "Pilih menu Tambah di bagian bawah aplikasi, lalu pilih target tabungan dan masukkan nominalnya. Kamu juga bisa gunakan tombol cepat nominal." },
         { q: "Apakah data saya aman?", a: "Ya, data Anda tersimpan secara aman di cloud (Firebase) jika Anda login, sehingga tetap terjaga meskipun ganti perangkat." },
-        { q: "Bisa tambah kategori baru?", a: "Saat ini kategori sudah disesuaikan default untuk memudahkan pengelolaan dana general. Penambahan custom kategori akan hadir pada versi selanjutnya." }
+        { q: "Bisa tambah kategori baru?", a: "Ya! Saat membuat target baru, kamu bisa menambahkan kategori custom dengan menekan tombol 'Tambah Kategori Baru'." },
+        { q: "Bagaimana cara melihat laporan?", a: "Buka menu Laporan di navigasi bawah. Di sana kamu bisa lihat tren 6 bulan, sebaran aset, dan mengekspor data ke PDF/Excel." },
+        { q: "Apa itu Mode Gelap?", a: "Buka Pengaturan untuk mengaktifkan Mode Gelap yang lebih nyaman di mata saat digunakan malam hari." },
+        { q: "Bagaimana cara menghapus transaksi?", a: "Buka halaman Riwayat Transaksi, cari transaksi yang ingin dihapus, lalu tekan tombol Hapus. Saldo target akan otomatis dikembalikan." },
     ];
 
     return (
-        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)]">
+        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)] page-transition">
             <TopBar
                 title="Pusat Bantuan"
                 rightComponent={

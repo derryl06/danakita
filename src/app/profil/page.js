@@ -1,23 +1,30 @@
 'use client';
 
 import TopBar from '../../components/TopBar';
-import { User, LogIn, UserPlus, Settings, HelpCircle, ChevronRight, LogOut, Link2, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
-import { useState } from 'react';
+import { User, LogIn, UserPlus, Settings, HelpCircle, ChevronRight, LogOut, Link2, Copy, CheckCircle2, AlertCircle, Trophy, Flame } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useAppContext } from '../../context/AppContext';
+import { useToast } from '../../components/Toast';
 import { auth } from '../../utils/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { calculateStreak, getUnlockedAchievements } from '../../components/Gamification';
 
 export default function ProfilPage() {
-    const { user, profile, joinHousehold } = useAppContext();
+    const { user, profile, joinHousehold, targets, transactions } = useAppContext();
+    const { addToast } = useToast();
     const router = useRouter();
     const [joinId, setJoinId] = useState('');
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    const streak = useMemo(() => calculateStreak(transactions), [transactions]);
+    const achievements = useMemo(() => getUnlockedAchievements(targets, transactions), [targets, transactions]);
+
     const handleLogout = async () => {
         await signOut(auth);
+        addToast('Berhasil keluar dari akun', 'info');
         router.push('/');
     };
 
@@ -29,19 +36,21 @@ export default function ProfilPage() {
         if (res.success) {
             setStatus({ type: 'success', message: 'Berhasil bergabung!' });
             setJoinId('');
+            addToast('Berhasil bergabung dengan household!', 'success');
         } else {
             setStatus({ type: 'error', message: res.message || 'Gagal bergabung' });
+            addToast(res.message || 'Gagal bergabung', 'error');
         }
         setTimeout(() => setStatus(null), 3000);
     };
 
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
-        alert('ID disalin!');
+        addToast('ID berhasil disalin!', 'success');
     };
 
     return (
-        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)]">
+        <main className="flex-1 flex flex-col min-h-screen pb-24 bg-[var(--color-bg-secondary)] page-transition">
             <TopBar title="Profil Pengguna" />
 
             <div className="px-5 mt-6 flex-1 flex flex-col items-center">
@@ -60,7 +69,23 @@ export default function ProfilPage() {
                         {user ? 'Akun Aktif (Online)' : 'Belum Login'}
                     </span>
 
-                    <div className="w-full flex gap-3 mt-8 relative z-10">
+                    {/* Stats Row */}
+                    <div className="flex gap-4 mt-6 relative z-10">
+                        {streak > 0 && (
+                            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+                                <Flame className="w-3.5 h-3.5 text-orange-300" />
+                                <span className="text-xs font-black text-white">{streak}🔥</span>
+                            </div>
+                        )}
+                        {achievements.length > 0 && (
+                            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+                                <Trophy className="w-3.5 h-3.5 text-amber-300" />
+                                <span className="text-xs font-black text-white">{achievements.length} Badge</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="w-full flex gap-3 mt-6 relative z-10">
                         {user ? (
                             <button
                                 onClick={handleLogout}
@@ -118,7 +143,7 @@ export default function ProfilPage() {
                             </div>
 
                             {status && (
-                                <div className={`flex items-center gap-2 text-[10px] font-bold mt-1 px-4 py-2.5 rounded-xl animate-in fade-in slide-in-from-top-1 ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                                <div className={`flex items-center gap-2 text-[10px] font-bold mt-1 px-4 py-2.5 rounded-xl animate-[fadeInUp_0.2s_ease-out] ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                                     {status.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                                     {status.message}
                                 </div>
@@ -134,7 +159,7 @@ export default function ProfilPage() {
                 </div>
 
                 <p className="text-xs text-slate-400 font-medium mt-10">
-                    Dana Kita Alpha v0.1 • Dibuat dengan cinta
+                    Dana Kita v1.1 • Dibuat dengan ❤️
                 </p>
             </div>
         </main>

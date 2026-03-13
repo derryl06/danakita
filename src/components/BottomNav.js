@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Target, PlusCircle, Clock, User } from 'lucide-react';
+import { Home, Target, PlusCircle, FileText, User } from 'lucide-react';
 import { useQuickAdd } from '../context/QuickAddContext';
 import clsx from 'clsx';
 import QuickAddSheet from './QuickAddSheet';
@@ -15,7 +15,7 @@ export default function BottomNav() {
         { name: 'Beranda', href: '/', icon: Home },
         { name: 'Target', href: '/target', icon: Target },
         { name: 'Tambah', action: () => setIsOpen(true), icon: PlusCircle, isMain: true },
-        { name: 'Checklist', href: '/persiapan', icon: Clock },
+        { name: 'Laporan', href: '/laporan', icon: FileText },
         { name: 'Profil', href: '/profil', icon: User },
     ];
 

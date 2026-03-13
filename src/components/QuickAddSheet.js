@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuickAdd } from '../context/QuickAddContext';
 import { useAppContext } from '../context/AppContext';
+import { useToast } from './Toast';
 import { X } from 'lucide-react';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -11,6 +12,7 @@ import confetti from 'canvas-confetti';
 export default function QuickAddSheet() {
     const { isOpen, setIsOpen } = useQuickAdd();
     const { targets, addTransaction } = useAppContext();
+    const { addToast } = useToast();
     const router = useRouter();
 
     const [amount, setAmount] = useState('');
@@ -33,7 +35,7 @@ export default function QuickAddSheet() {
             }, 0);
             hasInitializedOnOpen.current = true;
         }
-    }, [isOpen, targets]); // targets and isOpen are enough with functional update
+    }, [isOpen, targets]);
 
     if (!isOpen) return null;
 
@@ -79,6 +81,15 @@ export default function QuickAddSheet() {
             setAmount('');
             setNote('');
             setType('in');
+
+            // Show toast notification
+            const targetName = target ? target.name : '';
+            addToast(
+                type === 'in'
+                    ? `+Rp ${parsedAmount.toLocaleString('id-ID')} ke ${targetName} 🎉`
+                    : `-Rp ${parsedAmount.toLocaleString('id-ID')} dari ${targetName}`,
+                type === 'in' ? 'success' : 'info'
+            );
         } catch (err) {
             if (err instanceof z.ZodError) {
                 const newErrors = {};
@@ -99,10 +110,16 @@ export default function QuickAddSheet() {
         }
     };
 
+    const quickAmounts = [50000, 100000, 250000, 500000, 1000000];
+
+    const setQuickAmount = (val) => {
+        setAmount(val.toLocaleString('id-ID'));
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm transition-all duration-300" onClick={() => setIsOpen(false)}>
             <div
-                className="w-full max-w-[400px] mb-6 mx-4 bg-white rounded-[32px] p-6 shadow-2xl border border-white/40 animate-in slide-in-from-bottom-8 relative overflow-hidden"
+                className="w-full max-w-[400px] mb-6 mx-4 bg-white rounded-[32px] p-6 shadow-2xl border border-white/40 animate-[scaleIn_0.25s_ease-out] relative overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -164,6 +181,21 @@ export default function QuickAddSheet() {
 
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1.5 ml-1 uppercase tracking-wider">Nominal</label>
+                            {/* Quick Amount Buttons */}
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {quickAmounts.map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        onClick={() => setQuickAmount(val)}
+                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all active:scale-95 ${amount === val.toLocaleString('id-ID')
+                                            ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm'
+                                            : 'bg-white border-slate-200 text-slate-500 hover:border-blue-200 hover:bg-blue-50/50'}`}
+                                    >
+                                        {val >= 1000000 ? `${val / 1000000}jt` : `${val / 1000}rb`}
+                                    </button>
+                                ))}
+                            </div>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
                                 <input
@@ -190,7 +222,7 @@ export default function QuickAddSheet() {
 
                         <button
                             type="submit"
-                            className="w-full bg-gradient-to-r from-[var(--color-primary)] to-blue-600 text-white py-4 rounded-[16px] font-bold mt-4 shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
+                            className="w-full bg-gradient-to-r from-[var(--color-primary)] to-blue-600 text-white py-4 rounded-[16px] font-bold mt-2 shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
                         >
                             Simpan Transaksi
                         </button>

@@ -4,14 +4,14 @@ import { useAppContext } from '../context/AppContext';
 import { useQuickAdd } from '../context/QuickAddContext';
 import TopBar from '../components/TopBar';
 import GoalCard from '../components/GoalCard';
-import { differenceInMonths, parseISO, isValid, subDays, isSameDay, format, startOfDay } from 'date-fns';
-import { id } from 'date-fns/locale';
-import { ArrowRight, Sparkles, Calendar, Eye, EyeOff, Flame } from 'lucide-react';
+import { StreakBadge, MonthlySummary } from '../components/Gamification';
+import { differenceInMonths, parseISO, isValid } from 'date-fns';
+import { ArrowRight, Sparkles, Calendar, Eye, EyeOff, Wallet, Target } from 'lucide-react';
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Beranda() {
-  const { targets, transactions, isDemoMode, loadDemoData, clearData, deleteTarget, isPrivacyMode, togglePrivacyMode } = useAppContext();
+  const { targets, transactions, isDemoMode, loadDemoData, clearData, deleteTarget, isPrivacyMode, togglePrivacyMode, monthlyBudget, isLoading } = useAppContext();
   const { setIsOpen } = useQuickAdd();
   const router = useRouter();
 
@@ -44,70 +44,44 @@ export default function Beranda() {
     if (!isValid(parsedDate)) return { perMonth: 0, status: 'Belum disetel', type: 'neutral' };
 
     const sisaBulan = differenceInMonths(parsedDate, new Date());
-
-    // If deadline is in the future but less than 1 month, treat as 1 month to avoid Infinity
     const effectiveSisaBulan = sisaBulan <= 0 ? 0 : sisaBulan;
-
     const sisaTarget = targetUtama.target_amount - targetUtama.current_amount;
     if (sisaTarget <= 0) return { perMonth: 0, status: 'Tercapai 🎉', type: 'success' };
-
     if (effectiveSisaBulan <= 0) return { perMonth: 0, status: 'Deadline berlalu', type: 'warning' };
 
     const butuhPerBulan = sisaTarget / effectiveSisaBulan;
-
     return { perMonth: butuhPerBulan, status: 'On track', type: 'success' };
   }, [targetUtama]);
 
-  const activityMap = useMemo(() => {
-    const daysCount = 28; // 4 Minggu terakhir
-    const today = startOfDay(new Date());
-    const tracking = [];
+  // Monthly budget progress
+  const monthlyBudgetProgress = useMemo(() => {
+    if (monthlyBudget <= 0) return null;
+    const now = new Date();
+    const thisMonthSavings = (transactions || [])
+      .filter(tx => {
+        if (!tx.date || tx.type !== 'in') return false;
+        const d = new Date(tx.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((a, t) => a + (Number(t.amount) || 0), 0);
+    return { saved: thisMonthSavings, target: monthlyBudget, percent: Math.min(100, (thisMonthSavings / monthlyBudget) * 100) };
+  }, [monthlyBudget, transactions]);
 
-    for (let i = daysCount - 1; i >= 0; i--) {
-      const date = subDays(today, i);
-      const isDayMatch = (trx) => {
-        if (!trx.date) return false;
-        const tDate = typeof trx.date === 'string' ? parseISO(trx.date) : new Date(trx.date);
-        return isSameDay(tDate, date);
-      };
-
-      const dayTransactions = transactions?.filter(t => t.type === 'in' && isDayMatch(t)) || [];
-      const totalIn = dayTransactions.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
-
-      let intensity = 0;
-      if (totalIn > 0) {
-        if (totalIn >= 500000) intensity = 3;
-        else if (totalIn >= 100000) intensity = 2;
-        else intensity = 1;
-      }
-
-      tracking.push({
-        date,
-        totalIn,
-        intensity,
-        label: format(date, 'd MMM', { locale: id })
-      });
-    }
-
-    return tracking;
-  }, [transactions]);
-
-  const currentStreak = useMemo(() => {
-    let streak = 0;
-    // Loop dari hari ini ke belakang
-    for (let i = activityMap.length - 1; i >= 0; i--) {
-      if (activityMap[i].intensity > 0) {
-        streak++;
-      } else if (i !== activityMap.length - 1) {
-        // Kalau bolong selain hari ini, stop.
-        break;
-      }
-    }
-    return streak;
-  }, [activityMap]);
+  if (isLoading) {
+    return (
+      <main className="flex-1 flex flex-col min-h-screen pb-24 page-transition">
+        <TopBar title="Dana Kita" subtitle="Memuat..." />
+        <div className="px-5 mt-6 flex flex-col gap-4">
+          <div className="skeleton h-48 w-full rounded-[32px]" />
+          <div className="skeleton h-24 w-full rounded-[24px]" />
+          <div className="skeleton h-24 w-full rounded-[24px]" />
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="flex-1 flex flex-col min-h-screen pb-24">
+    <main className="flex-1 flex flex-col min-h-screen pb-24 page-transition">
       <TopBar
         title="Dana Kita"
         subtitle="Mulai persiapkan masa depanmu"
@@ -183,6 +157,12 @@ export default function Beranda() {
         ) : (
           // NORMAL STATE
           <div>
+            {/* Streak Badge */}
+            <div className="mb-4">
+              <StreakBadge transactions={transactions} />
+            </div>
+
+            {/* Hero Card */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Target Utama</h2>
@@ -247,56 +227,37 @@ export default function Beranda() {
               </div>
             </div>
 
-            {/* HABIT TRACKER */}
-            {targets.length > 0 && (
-              <div className="mt-8 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <Flame className={currentStreak > 0 ? "text-amber-500 w-4 h-4" : "text-slate-400 w-4 h-4"} />
-                    Konsistensi Nabung
-                  </h3>
-                  {currentStreak > 0 && (
-                    <span className="text-xs font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">{currentStreak} Hari Beruntun🔥</span>
-                  )}
+            {/* Monthly Budget Widget */}
+            {monthlyBudgetProgress && (
+              <div className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-[24px] p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-bold text-indigo-800 uppercase tracking-wider">Anggaran Bulan Ini</span>
+                  </div>
+                  <span className="text-xs font-black text-indigo-600">{monthlyBudgetProgress.percent.toFixed(0)}%</span>
                 </div>
-
-                <div className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] relative overflow-hidden group">
-                  <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-                    {activityMap.map((day, idx) => {
-                      let bgClass = "bg-slate-50 border border-slate-100";
-                      if (day.intensity === 1) bgClass = "bg-emerald-200 border !border-emerald-300 shadow-[0_0_10px_rgba(167,243,208,0.5)]";
-                      if (day.intensity === 2) bgClass = "bg-emerald-400 border !border-emerald-500 shadow-[0_0_12px_rgba(52,211,153,0.6)]";
-                      if (day.intensity === 3) bgClass = "bg-emerald-600 border !border-emerald-700 shadow-[0_0_15px_rgba(5,150,105,0.7)]";
-
-                      return (
-                        <div
-                          key={idx}
-                          title={`${day.label}: ${day.intensity > 0 ? (isPrivacyMode ? 'Rp •••••••' : `+Rp ${day.totalIn.toLocaleString('id-ID')}`) : 'Belum menabung'}`}
-                          className={`aspect-square rounded-[8px] transition-all duration-500 hover:scale-110 cursor-pointer ${bgClass}`}
-                        ></div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">28 Hari Terakhir</span>
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 tracking-wider">
-                      <span>KOSONG</span>
-                      <div className="flex gap-1 ml-1 mr-1">
-                        <div className="w-2.5 h-2.5 rounded-[3px] bg-slate-50 border border-slate-200"></div>
-                        <div className="w-2.5 h-2.5 rounded-[3px] bg-emerald-200 border border-emerald-300"></div>
-                        <div className="w-2.5 h-2.5 rounded-[3px] bg-emerald-400 border border-emerald-500"></div>
-                        <div className="w-2.5 h-2.5 rounded-[3px] bg-emerald-600 border border-emerald-700"></div>
-                      </div>
-                      <span>RUTIN</span>
-                    </div>
-                  </div>
+                <div className="w-full h-2.5 bg-white rounded-full overflow-hidden mb-2 shadow-inner">
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 ${monthlyBudgetProgress.percent >= 100 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-indigo-500 to-blue-400'}`}
+                    style={{ width: `${monthlyBudgetProgress.percent}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] font-bold text-indigo-400">
+                  <span>{isPrivacyMode ? 'Rp •••' : `Rp ${monthlyBudgetProgress.saved.toLocaleString('id-ID')}`}</span>
+                  <span>{isPrivacyMode ? 'Rp •••' : `Rp ${monthlyBudgetProgress.target.toLocaleString('id-ID')}`}</span>
                 </div>
               </div>
             )}
 
+            {/* Monthly Summary */}
+            <div className="mb-6">
+              <MonthlySummary transactions={transactions} isPrivacyMode={isPrivacyMode} />
+            </div>
+
+            {/* Target List */}
             {targets.length > 1 && (
-              <div className="mt-8">
+              <div className="mt-2">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-base font-bold text-[var(--color-text-primary)]">Rincian Target</h3>
                   <button onClick={() => router.push('/target')} className="text-sm font-semibold text-[var(--color-primary)]">Lihat semua</button>
