@@ -5,19 +5,20 @@ import { useQuickAdd } from '../context/QuickAddContext';
 import TopBar from '../components/TopBar';
 import GoalCard from '../components/GoalCard';
 import { StreakBadge, MonthlySummary } from '../components/Gamification';
-import SavingsHeatmap from '../components/SavingsHeatmap';
 import HealthScore from '../components/HealthScore';
 import MonthlyDigest from '../components/MonthlyDigest';
+import ReceiptScannerModal from '../components/ReceiptScannerModal';
 import { differenceInMonths, parseISO, isValid } from 'date-fns';
-import { ArrowRight, Sparkles, Calendar, Eye, EyeOff, Wallet, Target, Share2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Calendar, Eye, EyeOff, Wallet, Target, Share2, Scan, Landmark, Plus, History, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Beranda() {
   const { targets, transactions, isDemoMode, loadDemoData, clearData, deleteTarget, isPrivacyMode, togglePrivacyMode, monthlyBudget, isLoading, expenses, debts } = useAppContext();
-  const { setIsOpen } = useQuickAdd();
+  const { setIsOpen, openWithData } = useQuickAdd();
   const router = useRouter();
   const [showDigest, setShowDigest] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const targetUtama = useMemo(() => {
     if (targets.length === 0) return null;
@@ -156,28 +157,30 @@ export default function Beranda() {
             {/* Hero Section */}
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[34px] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-              <div className="relative bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm overflow-hidden">
+              <div className="relative bg-white border border-slate-100 rounded-[32px] p-7 shadow-sm overflow-hidden">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{targetUtama?.name || 'Total Tabungan'}</p>
-                    <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                    <h2 className="text-4xl font-black text-slate-800 tracking-tighter">
                       {isPrivacyMode ? 'Rp ••••••' : `Rp ${targetUtama?.current_amount?.toLocaleString('id-ID') || '0'}`}
                     </h2>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                  <div className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider ${type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                     {status}
                   </div>
                 </div>
 
-                <div className="w-full h-3 bg-slate-50 rounded-full overflow-hidden mb-5">
+                <div className="w-full h-3 bg-slate-50 rounded-full overflow-hidden mb-6">
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-1000"
+                    className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-1000 relative"
                     style={{ width: `${targetUtama ? Math.min((targetUtama.current_amount / (targetUtama.target_amount || 1)) * 100, 100) : 0}%` }}
-                  />
+                  >
+                    <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[shimmer_2s_linear_infinite]"></div>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-5">
                     <div>
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Target</p>
                         <p className="text-xs font-black text-slate-600">{isPrivacyMode ? 'Rp •••' : `Rp ${targetUtama?.target_amount?.toLocaleString('id-ID') || '0'}`}</p>
@@ -193,15 +196,55 @@ export default function Beranda() {
                     onClick={() => setIsOpen(true)}
                     className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-slate-800 active:scale-95 transition-all shadow-lg"
                   >
-                    <ArrowRight className="w-5 h-5" />
+                    <Plus className="w-6 h-6" />
                   </button>
                 </div>
               </div>
             </div>
 
+            {/* Quick Actions Row */}
+            <div className="flex items-center gap-4 overflow-x-auto pb-2 -mx-5 px-5 no-scrollbar">
+                <button 
+                    onClick={() => setIsScannerOpen(true)}
+                    className="flex flex-col items-center gap-2 group shrink-0"
+                >
+                    <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-active:scale-90 transition-all hover:border-blue-200 hover:bg-blue-50">
+                        <Scan className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Scan</span>
+                </button>
+                <button 
+                    onClick={() => router.push('/hutang')}
+                    className="flex flex-col items-center gap-2 group shrink-0"
+                >
+                    <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-active:scale-90 transition-all hover:border-rose-200 hover:bg-rose-50">
+                        <Landmark className="w-6 h-6 text-rose-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hutang</span>
+                </button>
+                <button 
+                    onClick={() => router.push('/transaksi')}
+                    className="flex flex-col items-center gap-2 group shrink-0"
+                >
+                    <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-active:scale-90 transition-all hover:border-amber-200 hover:bg-amber-50">
+                        <History className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Riwayat</span>
+                </button>
+                <button 
+                    onClick={() => router.push('/target')}
+                    className="flex flex-col items-center gap-2 group shrink-0"
+                >
+                    <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-active:scale-90 transition-all hover:border-emerald-200 hover:bg-emerald-50">
+                        <Target className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Target</span>
+                </button>
+            </div>
+
             {/* Insights Grid */}
             <div className="grid grid-cols-2 gap-4">
-               <div className="bg-white rounded-[24px] p-4 border border-slate-100 shadow-sm aspect-[1.1/1] flex flex-col justify-between overflow-hidden">
+               <div className="bg-white rounded-[32px] p-5 border border-slate-100 shadow-sm aspect-[1.1/1] flex flex-col justify-between overflow-hidden">
                   <HealthScore 
                     targets={targets} 
                     transactions={transactions} 
@@ -211,14 +254,14 @@ export default function Beranda() {
                   />
                </div>
 
-               <div className="bg-white rounded-[24px] p-4 border border-slate-100 shadow-sm aspect-[1.1/1] flex flex-col justify-between overflow-hidden">
+               <div className="bg-white rounded-[32px] p-5 border border-slate-100 shadow-sm aspect-[1.1/1] flex flex-col justify-between overflow-hidden">
                   <div className="flex items-center gap-2">
                     <Wallet className="w-3.5 h-3.5 text-indigo-500" />
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Budget</span>
                   </div>
                   {monthlyBudgetProgress ? (
                     <div>
-                        <p className="text-lg font-black text-slate-800">{monthlyBudgetProgress.percent.toFixed(0)}%</p>
+                        <p className="text-xl font-black text-slate-800">{monthlyBudgetProgress.percent.toFixed(0)}%</p>
                         <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden mt-1 mb-2">
                             <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${monthlyBudgetProgress.percent}%` }} />
                         </div>
@@ -233,39 +276,35 @@ export default function Beranda() {
             {/* Monthly Summary */}
             <MonthlySummary transactions={transactions} isPrivacyMode={isPrivacyMode} />
 
-            {/* Activity Area */}
-            <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Aktivitas Menabung</h3>
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                </div>
-                <SavingsHeatmap transactions={transactions} compact={true} />
-            </div>
-
             {/* Compact Target List */}
             {(targets && targets.length > 0) && (
                 <div className="mb-4">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-base font-black text-slate-800 tracking-tight">Rincian Tabungan</h3>
-                        <button onClick={() => router.push('/target')} className="text-xs font-bold text-indigo-500 px-3 py-1 bg-indigo-50 rounded-full">Lihat Semua</button>
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-base font-black text-slate-800 tracking-tight">Rincian Tabungan</h3>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase">Progres Setiap Target</p>
+                        </div>
+                        <button onClick={() => router.push('/target')} className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all">
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
                     </div>
                     <div className="flex flex-col gap-3">
                         {targets.slice(0, 3).map(t => (
-                            <div key={t.id} onClick={() => router.push('/target')} className="bg-white rounded-2xl p-4 border border-slate-50 shadow-sm flex items-center justify-between active:scale-[0.98] transition-all">
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                                        <Target className="w-5 h-5 text-slate-400" />
+                            <div key={t.id} onClick={() => router.push('/target')} className="bg-white rounded-[24px] p-5 border border-slate-50 shadow-sm flex items-center justify-between active:scale-[0.98] transition-all group">
+                                <div className="flex items-center gap-4 overflow-hidden">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 group-hover:bg-blue-50 transition-colors">
+                                        <Target className="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-xs font-bold text-slate-700 truncate">{t.name}</p>
-                                        <div className="w-24 h-1 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                                        <p className="text-sm font-bold text-slate-700 truncate">{t.name}</p>
+                                        <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden shadow-inner">
                                             <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, (t.current_amount / (t.target_amount || 1)) * 100)}%` }} />
                                         </div>
                                     </div>
                                 </div>
                                 <div className="text-right ml-2">
-                                    <p className="text-xs font-black text-slate-800">{isPrivacyMode ? 'Rp •••' : `Rp ${t.current_amount.toLocaleString('id-ID')}`}</p>
-                                    <p className="text-[9px] text-slate-400 font-bold uppercase">{Math.round((t.current_amount / (t.target_amount || 1)) * 100)}%</p>
+                                    <p className="text-sm font-black text-slate-800">{isPrivacyMode ? 'Rp •••' : `Rp ${t.current_amount.toLocaleString('id-ID')}`}</p>
+                                    <p className="text-[10px] text-slate-400 font-black uppercase mt-1">{Math.round((t.current_amount / (t.target_amount || 1)) * 100)}%</p>
                                 </div>
                             </div>
                         ))}
@@ -275,6 +314,15 @@ export default function Beranda() {
           </div>
         )}
       </div>
+
+      <ReceiptScannerModal 
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onAmountDetected={(amt) => {
+            openWithData({ amount: amt, type: 'expense' });
+            setIsScannerOpen(false);
+        }}
+      />
 
       <MonthlyDigest 
         isOpen={showDigest} 

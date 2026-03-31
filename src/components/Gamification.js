@@ -147,30 +147,63 @@ export function MonthlySummary({ transactions, isPrivacyMode }) {
         return `Rp ${n.toLocaleString('id-ID')}`;
     };
 
+    const totalFlow = thisMonthIn + thisMonthOut;
+    const inRatio = totalFlow > 0 ? (thisMonthIn / totalFlow * 100) : 0;
+    const outRatio = totalFlow > 0 ? (thisMonthOut / totalFlow * 100) : 0;
+
     return (
-        <div className="bg-white/80 backdrop-blur-md border border-slate-100 rounded-[24px] p-5 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ringkasan {monthName}</h3>
+        <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm relative overflow-hidden group">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Wawasan {monthName}</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Status Keuangan Kamu</p>
+                </div>
                 {Number(growth) !== 0 && (
-                    <span className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${Number(growth) >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                        <TrendingUp className="w-3 h-3" />
+                    <span className={`text-[10px] font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 ${Number(growth) >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                        <TrendingUp className={`w-3.5 h-3.5 ${Number(growth) < 0 ? 'rotate-180' : ''}`} />
                         {growth > 0 ? '+' : ''}{growth}%
                     </span>
                 )}
             </div>
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100/50">
-                    <span className="block text-[9px] font-bold text-emerald-500 uppercase mb-1">Masuk</span>
-                    <span className="text-sm font-black text-emerald-700">{fmt(thisMonthIn)}</span>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="relative p-4 rounded-[24px] bg-slate-50/50 border border-slate-100 overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-10">
+                        <TrendingUp className="w-8 h-8 text-emerald-600" />
+                    </div>
+                    <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Masuk</span>
+                    <span className="text-lg font-black text-emerald-600 tracking-tight">{fmt(thisMonthIn)}</span>
+                    <div className="w-full h-1 bg-emerald-100 rounded-full mt-3 overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${inRatio}%` }} />
+                    </div>
                 </div>
-                <div className="bg-rose-50/50 p-3 rounded-2xl border border-rose-100/50">
-                    <span className="block text-[9px] font-bold text-rose-500 uppercase mb-1">Keluar</span>
-                    <span className="text-sm font-black text-rose-700">{fmt(thisMonthOut)}</span>
+
+                <div className="relative p-4 rounded-[24px] bg-slate-50/50 border border-slate-100 overflow-hidden">
+                   <div className="absolute top-0 right-0 p-2 opacity-10">
+                        <X className="w-8 h-8 text-rose-600" />
+                    </div>
+                    <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Keluar</span>
+                    <span className="text-lg font-black text-rose-600 tracking-tight">{fmt(thisMonthOut)}</span>
+                    <div className="w-full h-1 bg-rose-100 rounded-full mt-3 overflow-hidden">
+                        <div className="h-full bg-rose-500 rounded-full transition-all duration-1000" style={{ width: `${outRatio}%` }} />
+                    </div>
                 </div>
-                <div className="bg-blue-50/50 p-3 rounded-2xl border border-blue-100/50">
-                    <span className="block text-[9px] font-bold text-blue-500 uppercase mb-1">Transaksi</span>
-                    <span className="text-sm font-black text-blue-700">{thisMonthTx.length}x</span>
-                </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                    <Star className="w-5 h-5 text-blue-500 fill-blue-500/20" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-blue-900 uppercase">Aktivitas</p>
+                    <p className="text-xs font-bold text-blue-600">{thisMonthTx.length} Transaksi Tercatat</p>
+                  </div>
+               </div>
+               <div className="text-right">
+                  <p className="text-[9px] font-black text-blue-400 uppercase">Tingkat Menabung</p>
+                  <p className="text-xs font-black text-blue-700">{thisMonthIn > 0 ? (100 - (thisMonthOut / thisMonthIn * 100)).toFixed(0) : 0}%</p>
+               </div>
             </div>
         </div>
     );
