@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Target, PlusCircle, FileText, User } from 'lucide-react';
+import { Home, PlusCircle, LayoutDashboard, ShoppingBag, HandCoins, User } from 'lucide-react';
 import { useQuickAdd } from '../context/QuickAddContext';
 import clsx from 'clsx';
 import QuickAddSheet from './QuickAddSheet';
@@ -13,9 +13,9 @@ export default function BottomNav() {
 
     const tabs = [
         { name: 'Beranda', href: '/', icon: Home },
-        { name: 'Target', href: '/target', icon: Target },
+        { name: 'Keluar', href: '/pengeluaran', icon: ShoppingBag },
         { name: 'Tambah', action: () => setIsOpen(true), icon: PlusCircle, isMain: true },
-        { name: 'Laporan', href: '/laporan', icon: FileText },
+        { name: 'Hutang', href: '/hutang', icon: HandCoins },
         { name: 'Profil', href: '/profil', icon: User },
     ];
 
@@ -27,7 +27,8 @@ export default function BottomNav() {
                 <div className="flex justify-between items-center text-xs">
                     {tabs.map((tab, idx) => {
                         const Icon = tab.icon;
-                        const isActive = tab.href ? (pathname === tab.href || pathname === `${tab.href}/`) : false;
+                        const isActive = tab.href ? (pathname === tab.href || pathname.startsWith(tab.href + '/')) : false;
+                        const isCurrentExact = tab.href === '/' ? pathname === '/' : isActive;
 
                         if (tab.action) {
                             return (
@@ -50,13 +51,13 @@ export default function BottomNav() {
                                 href={tab.href}
                                 className={clsx(
                                     "flex flex-col items-center gap-1.5 p-2 w-16 transition-all duration-300 hover:-translate-y-0.5 relative",
-                                    isActive ? "text-[var(--color-primary)] font-bold" : "text-slate-400 font-medium hover:text-slate-600"
+                                    isCurrentExact ? "text-[var(--color-primary)] font-bold" : "text-slate-400 font-medium hover:text-slate-600"
                                 )}
                             >
-                                {isActive && (
+                                {isCurrentExact && (
                                     <div className="absolute -top-3 w-8 h-1 bg-[var(--color-primary)] rounded-b-full"></div>
                                 )}
-                                <Icon className={clsx("w-5 h-5", isActive ? "stroke-[2.5px]" : "stroke-2")} />
+                                <Icon className={clsx("w-5 h-5", isCurrentExact ? "stroke-[2.5px]" : "stroke-2")} />
                                 <span>{tab.name}</span>
                             </Link>
                         );

@@ -84,10 +84,19 @@ export function getUnlockedAchievements(targets, transactions) {
 }
 
 // Streak Widget Component
-export function StreakBadge({ transactions }) {
+export function StreakBadge({ transactions, compact }) {
     const streak = calculateStreak(transactions);
 
     if (streak === 0) return null;
+
+    if (compact) {
+        return (
+            <div className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-100 rounded-full px-3 py-1.5 shadow-sm">
+                <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                <span className="text-xs font-black text-orange-600">{streak} Hari</span>
+            </div>
+        );
+    }
 
     return (
         <div className="flex items-center gap-2 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-2xl px-4 py-2.5 shadow-sm">

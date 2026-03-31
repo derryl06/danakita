@@ -3,22 +3,24 @@
 import { useAppContext } from '../../context/AppContext';
 import TopBar from '../../components/TopBar';
 import ConfirmModal from '../../components/ConfirmModal';
+import CSVImporter from '../../components/CSVImporter';
 import { useToast } from '../../components/Toast';
-import { ChevronLeft, ArrowUpRight, ArrowDownLeft, Calendar, Tag, Flame, Search, Filter, X, Trash2 } from 'lucide-react';
+import { ChevronLeft, ArrowUpRight, ArrowDownLeft, Calendar, Tag, Flame, Search, Filter, X, Trash2, FileSpreadsheet } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 
 export default function TransaksiPage() {
-    const { transactions, targets, reactToTransaction, deleteTransaction, user, isPrivacyMode } = useAppContext();
+    const { transactions, targets, reactToTransaction, deleteTransaction, user, isPrivacyMode, importTransactions } = useAppContext();
     const router = useRouter();
     const { addToast } = useToast();
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState('all'); // all, in, out
+    const [filterType, setFilterType] = useState('all');
     const [filterTarget, setFilterTarget] = useState('all');
     const [showFilters, setShowFilters] = useState(false);
-    const [sortBy, setSortBy] = useState('date-desc'); // date-desc, date-asc, amount-desc, amount-asc
+    const [sortBy, setSortBy] = useState('date-desc');
     const [confirmDelete, setConfirmDelete] = useState(null);
+    const [showCSVImporter, setShowCSVImporter] = useState(false);
 
     const getTargetName = (id) => {
         const target = targets.find(t => t.id === id);
@@ -92,9 +94,18 @@ export default function TransaksiPage() {
             <TopBar
                 title="Riwayat Transaksi"
                 rightComponent={
-                    <button onClick={() => router.back()} className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition">
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowCSVImporter(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[11px] font-black uppercase tracking-wider hover:bg-emerald-100 transition-all active:scale-95"
+                            title="Import CSV Bank"
+                        >
+                            <FileSpreadsheet className="w-3.5 h-3.5" /> Import CSV
+                        </button>
+                        <button onClick={() => router.back()} className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition">
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                    </div>
                 }
             />
 
@@ -272,6 +283,16 @@ export default function TransaksiPage() {
                 message={`Transaksi ${confirmDelete?.type === 'in' ? 'menabung' : 'tarik dana'} sebesar Rp ${confirmDelete?.amount?.toLocaleString('id-ID')} akan dihapus dan saldo target akan dikembalikan.`}
                 confirmText="Hapus"
                 type="danger"
+            />
+
+            <CSVImporter
+                isOpen={showCSVImporter}
+                onClose={() => setShowCSVImporter(false)}
+                onImport={async (rows) => {
+                    await importTransactions(rows);
+                    addToast('Berhasil import ' + rows.length + ' transaksi!', 'success');
+                    setShowCSVImporter(false);
+                }}
             />
         </main>
     );

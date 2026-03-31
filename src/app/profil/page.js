@@ -1,7 +1,7 @@
 'use client';
 
 import TopBar from '../../components/TopBar';
-import { User, LogIn, UserPlus, Settings, HelpCircle, ChevronRight, LogOut, Link2, Copy, CheckCircle2, AlertCircle, Trophy, Flame } from 'lucide-react';
+import { User, LogIn, UserPlus, Settings, HelpCircle, ChevronRight, LogOut, Link2, Copy, CheckCircle2, AlertCircle, Trophy, Flame, FileText, Target as TargetIcon } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useAppContext } from '../../context/AppContext';
@@ -153,6 +153,10 @@ export default function ProfilPage() {
                 )}
 
                 <div className="w-full bg-white rounded-[24px] border border-[var(--color-border)] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.06)] transition-shadow duration-500 mt-6 overflow-hidden">
+                    <MemoizedMenuLink href="/laporan" icon={<FileText className="w-5 h-5 text-blue-500" />} title="Laporan & Analisis" />
+                    <div className="h-[1px] w-[calc(100%-2.5rem)] ml-auto bg-slate-100" />
+                    <MemoizedMenuLink href="/target" icon={<TargetIcon className="w-5 h-5 text-emerald-500" />} title="Target Tabungan" />
+                    <div className="h-[1px] w-[calc(100%-2.5rem)] ml-auto bg-slate-100" />
                     <MemoizedMenuLink href="/pengaturan" icon={<Settings className="w-5 h-5 text-slate-500" />} title="Pengaturan Aplikasi" />
                     <div className="h-[1px] w-[calc(100%-2.5rem)] ml-auto bg-slate-100" />
                     <MemoizedMenuLink href="/bantuan" icon={<HelpCircle className="w-5 h-5 text-slate-500" />} title="Pusat Bantuan & FAQ" />

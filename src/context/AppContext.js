@@ -25,13 +25,16 @@ export function AppProvider({ children }) {
     const [profile, setProfile] = useState(null);
     const [targets, setTargets] = useState([]);
     const [transactions, setTransactions] = useState([]);
+    const [expenses, setExpenses] = useState([]);
+    const [debts, setDebts] = useState([]);
+    const [expenseBudgets, setExpenseBudgets] = useState({});
     const [isDemoMode, setIsDemoMode] = useState(false);
     const [partner, setPartner] = useState(null);
     const [categories, setCategories] = useState(['General', 'Menikah', 'Pendidikan', 'Rumah', 'Darurat']);
     const [isPrivacyMode, setIsPrivacyMode] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [monthlyBudget, setMonthlyBudget] = useState(0);
-    const [hasSeenOnboarding, setHasSeenOnboarding] = useState(true); // Default true to prevent flash
+    const [hasSeenOnboarding, setHasSeenOnboarding] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
 
     // Hydrate from localStorage after mount (prevents hydration mismatch)
@@ -50,6 +53,15 @@ export function AppProvider({ children }) {
 
         const onboarding = localStorage.getItem('dk_onboarding_seen') === 'true';
         setHasSeenOnboarding(onboarding);
+
+        const savedExpenses = localStorage.getItem('dk_expenses');
+        if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
+
+        const savedDebts = localStorage.getItem('dk_debts');
+        if (savedDebts) setDebts(JSON.parse(savedDebts));
+
+        const savedBudgets = localStorage.getItem('dk_expense_budgets');
+        if (savedBudgets) setExpenseBudgets(JSON.parse(savedBudgets));
     }, []);
 
     // Dark mode toggle
@@ -192,6 +204,18 @@ export function AppProvider({ children }) {
             localStorage.setItem('dk_categories', JSON.stringify(categories));
         }
     }, [targets, transactions, partner, categories, user, isDemoMode]);
+
+    useEffect(() => {
+        if (!user) localStorage.setItem('dk_expenses', JSON.stringify(expenses));
+    }, [expenses, user]);
+
+    useEffect(() => {
+        if (!user) localStorage.setItem('dk_debts', JSON.stringify(debts));
+    }, [debts, user]);
+
+    useEffect(() => {
+        localStorage.setItem('dk_expense_budgets', JSON.stringify(expenseBudgets));
+    }, [expenseBudgets]);
 
     const loadDemoData = () => {
         setTargets([
@@ -388,12 +412,64 @@ export function AppProvider({ children }) {
         }
     };
 
+    // ── Expenses CRUD ─────────────────────────────────────────────────────────
+    const addExpense = useCallback(async (expense) => {
+        if (user && db) {
+            const data = { ...expense, household_id: profile?.household_id, created_by: user.uid };
+            const docRef = await addDoc(collection(db, 'expenses'), data);
+            setExpenses(prev => [{ ...data, id: docRef.id }, ...prev]);
+        } else {
+            setExpenses(prev => [expense, ...prev]);
+        }
+    }, [user, profile, db]);
+
+    const deleteExpense = useCallback(async (id) => {
+        if (user && db) await deleteDoc(doc(db, 'expenses', id));
+        setExpenses(prev => prev.filter(e => e.id !== id));
+    }, [user, db]);
+
+    // ── Debts CRUD ────────────────────────────────────────────────────────────
+    const addDebt = useCallback(async (debt) => {
+        if (user && db) {
+            const data = { ...debt, household_id: profile?.household_id, created_by: user.uid };
+            const docRef = await addDoc(collection(db, 'debts'), data);
+            setDebts(prev => [{ ...data, id: docRef.id }, ...prev]);
+        } else {
+            setDebts(prev => [debt, ...prev]);
+        }
+    }, [user, profile, db]);
+
+    const deleteDebt = useCallback(async (id) => {
+        if (user && db) await deleteDoc(doc(db, 'debts', id));
+        setDebts(prev => prev.filter(d => d.id !== id));
+    }, [user, db]);
+
+    const settleDebt = useCallback(async (id) => {
+        if (user && db) await updateDoc(doc(db, 'debts', id), { is_paid: true });
+        setDebts(prev => prev.map(d => d.id === id ? { ...d, is_paid: true } : d));
+    }, [user, db]);
+
+    // ── Expense Budgets ───────────────────────────────────────────────────────
+    const updateExpenseBudget = useCallback((category, amount) => {
+        setExpenseBudgets(prev => ({ ...prev, [category]: amount }));
+    }, []);
+
+    // ── Import bulk transactions (from CSV) ───────────────────────────────────
+    const importTransactions = useCallback(async (txList) => {
+        for (const tx of txList) {
+            await addTransaction({ id: Date.now().toString() + Math.random(), ...tx });
+        }
+    }, [addTransaction]);
+
     return (
         <AppContext.Provider value={{
             user,
             profile,
             targets,
             transactions,
+            expenses,
+            debts,
+            expenseBudgets,
             categories,
             isDemoMode,
             partner,
@@ -402,6 +478,13 @@ export function AppProvider({ children }) {
             clearData,
             addTransaction,
             deleteTransaction,
+            importTransactions,
+            addExpense,
+            deleteExpense,
+            addDebt,
+            deleteDebt,
+            settleDebt,
+            updateExpenseBudget,
             addTarget,
             deleteTarget,
             updateTarget,

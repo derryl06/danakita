@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuickAdd } from '../context/QuickAddContext';
 import { useAppContext } from '../context/AppContext';
 import { useToast } from './Toast';
-import { X } from 'lucide-react';
+import { X, ScanLine } from 'lucide-react';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
+import ReceiptScannerModal from './ReceiptScannerModal';
 
 export default function QuickAddSheet() {
     const { isOpen, setIsOpen } = useQuickAdd();
@@ -20,6 +21,7 @@ export default function QuickAddSheet() {
     const [type, setType] = useState('in');
     const [note, setNote] = useState('');
     const [errors, setErrors] = useState({});
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
 
     const hasInitializedOnOpen = useRef(false);
 
@@ -119,19 +121,41 @@ export default function QuickAddSheet() {
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm transition-all duration-300" onClick={() => setIsOpen(false)}>
             <div
-                className="w-full max-w-[400px] mb-6 mx-4 bg-white rounded-[32px] p-6 shadow-2xl border border-white/40 animate-[scaleIn_0.25s_ease-out] relative overflow-hidden"
+                className="w-full max-w-[400px] mb-4 mx-4 bg-white rounded-[32px] shadow-2xl border border-white/40 animate-[scaleIn_0.25s_ease-out] relative flex flex-col"
+                style={{ maxHeight: 'calc(100dvh - 2rem)' }}
                 onClick={e => e.stopPropagation()}
             >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
 
-                <div className="flex justify-between items-center mb-6 relative z-10">
+                <div className="flex justify-between items-center px-6 pt-6 pb-4 relative z-10 shrink-0">
                     <h2 className="text-xl font-extrabold text-[var(--color-text-primary)] tracking-tight">
                         Catat Transaksi
                     </h2>
-                    <button onClick={() => setIsOpen(false)} className="p-2 bg-slate-50 hover:bg-slate-100 hover:rotate-90 rounded-full text-slate-500 transition-all duration-300">
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsScannerOpen(true)}
+                            title="Scan Nota / QRIS"
+                            className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-violet-50 to-blue-50 hover:from-violet-100 hover:to-blue-100 border border-violet-200 rounded-full text-violet-600 text-[11px] font-black uppercase tracking-wider transition-all duration-300 active:scale-95 shadow-sm"
+                        >
+                            <ScanLine className="w-3.5 h-3.5" /> Scan Nota
+                        </button>
+                        <button onClick={() => setIsOpen(false)} className="p-2 bg-slate-50 hover:bg-slate-100 hover:rotate-90 rounded-full text-slate-500 transition-all duration-300">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
+
+                <div className="overflow-y-auto px-6 pb-24 relative z-10">
+
+                {/* Receipt Scanner Modal */}
+                <ReceiptScannerModal
+                    isOpen={isScannerOpen}
+                    onClose={() => setIsScannerOpen(false)}
+                    onAmountDetected={(val) => {
+                        setAmount(val.toLocaleString('id-ID'));
+                        setIsScannerOpen(false);
+                    }}
+                />
 
                 {targets.length === 0 ? (
                     <div className="text-center py-8 relative z-10">
@@ -220,14 +244,15 @@ export default function QuickAddSheet() {
                             />
                         </div>
 
-                        <button
-                            type="submit"
-                            className="w-full bg-gradient-to-r from-[var(--color-primary)] to-blue-600 text-white py-4 rounded-[16px] font-bold mt-2 shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
-                        >
-                            Simpan Transaksi
-                        </button>
-                    </form>
-                )}
+                            <button
+                                type="submit"
+                                className="w-full bg-gradient-to-r from-[var(--color-primary)] to-blue-600 text-white py-4 rounded-[16px] font-bold mt-2 shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
+                            >
+                                Simpan Transaksi
+                            </button>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     );
